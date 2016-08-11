@@ -1,0 +1,31 @@
+{
+    "name": "distilleries/messenger",
+    "description": "Component to allow the comunication between messenger bot and your application.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Maxime Francois",
+            "email": "kezho@me.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0",
+        "illuminate/support": "5.2.*",
+        "guzzlehttp/guzzle": "^6.2"
+    },
+    "autoload": {
+        "classmap": [
+            "tests"
+        ],
+        "psr-4": {
+            "Distilleries\\Messenger\\": "src/Distilleries/Messenger"
+        }
+    },
+    "minimum-stability": "stable",
+    "require-dev": {
+        "orchestra/database": "~3.2",
+        "orchestra/testbench": "~3.2",
+        "phpunit/phpunit": "~4.5",
+        "mockery/mockery": "0.9.*"
+    }
+}

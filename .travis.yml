@@ -1,0 +1,36 @@
+language: php
+
+php:
+  - 5.5.9
+  - 5.5
+  - 5.6
+  - 7
+
+env:
+  global:
+    - setup=basic
+
+sudo: false
+
+before_install:
+  - if [[ $TRAVIS_PHP_VERSION =~ ^7 ]]; then phpenv config-rm xdebug.ini; fi
+  - composer self-update
+
+install:
+  - if [[ $setup = 'basic' ]]; then travis_retry composer install --no-interaction --prefer-source; fi
+  - if [[ $setup = 'stable' ]]; then travis_retry composer update --prefer-source --no-interaction --prefer-stable; fi
+  - if [[ $setup = 'lowest' ]]; then travis_retry composer update --prefer-source --no-interaction --prefer-lowest --prefer-stable; fi
+
+script:
+  - >
+    if [[ $TRAVIS_PHP_VERSION =~ ^7 ]]; then
+      phpdbg -qrr vendor/phpunit/phpunit/phpunit --coverage-clover=coverage.clover --coverage-text;
+    else
+     phpunit --configuration phpunit.xml --coverage-clover=coverage.clover
+    fi
+
+after_script:
+ - wget https://scrutinizer-ci.com/ocular.phar
+
+notifications:
+  slack: big-boss-studio:vLrsJ3hpqgIYugU7IKLMUwj2
