@@ -37,7 +37,7 @@ class ComponentControllerTest extends MessengerTestCase
     public function testGetValidHookError()
     {
 
-        $this->assertHTTPExceptionStatus(403, function ($this) {
+        $this->assertHTTPExceptionStatus(403, function () {
             $this->call('GET', config('messenger.uri_webhook'));
         });
     }
@@ -45,7 +45,7 @@ class ComponentControllerTest extends MessengerTestCase
     public function testGetValidHookInvalidParamHubVerifyToken()
     {
 
-        $this->assertHTTPExceptionStatus(403, function ($this) {
+        $this->assertHTTPExceptionStatus(403, function () {
             $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'subscribe', 'hub_verify_token' => str_random(20)]);
         });
     }
@@ -55,7 +55,7 @@ class ComponentControllerTest extends MessengerTestCase
     {
         $token = str_random(40);
         $this->app['config']->set('messenger.validation_token', $token);
-        $this->assertHTTPExceptionStatus(403, function ($this) use ($token) {
+        $this->assertHTTPExceptionStatus(403, function () use ($token) {
             $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'test', 'hub_verify_token' => $token]);
         });
     }
@@ -77,7 +77,7 @@ class ComponentControllerTest extends MessengerTestCase
 
     public function testPostMessageError()
     {
-        $this->assertHTTPExceptionStatus(403, function ($this) {
+        $this->assertHTTPExceptionStatus(403, function () {
             $this->call('POST', config('messenger.uri_webhook'));
         });
     }
