@@ -32,6 +32,7 @@ trait WebHookBaseTrait
     public function postMessage(Request $request, MessengerReceiverContract $messenger)
     {
         $object = $request->input('object');
+        $result = "";
 
         if (empty($object)) {
             return abort(403);
@@ -44,8 +45,6 @@ trait WebHookBaseTrait
             if (empty($entry) || !is_array($entry)) {
                 return abort(403);
             }
-
-            $result = "";
 
             foreach ($entry as $pageEntry) {
 
