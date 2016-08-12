@@ -7,7 +7,7 @@
 
 # Facebook Messenger 
 
-This repo contain some tools to work with facebook messenger bot and  laravel/lumen. This repo work on beta of facebook messanger. Some big change are coming for sure but I guess that can help you.
+This repo contain some tools to work with facebook messenger bot and  laravel/lumen. This repo work on beta of facebook messenger. Some big change are coming for sure but I guess that can help you.
 
 
 ## Table of contents
