@@ -28,9 +28,25 @@ This repo contain some tools to work with facebook messenger bot and  laravel/lu
 
 
 
-##Installation
+##Installation for Laravel
 
 `composer required distilleries/messenger`
+
+
+
+Add Service provider to `bootstrap/app.php`:
+
+``` php
+   
+   $app->register(Distilleries\Messenger\MessengerLumenServiceProvider::class);
+   
+```
+
+
+##Installation for Lumen
+
+`composer required distilleries/messenger`
+
 
 
 
@@ -50,7 +66,6 @@ And Facade (also in `config/app.php`) replace the laravel facade `Mail`
        'Messenger'           => 'Distilleries\Messenger\Facades\Messenger'
     ]
 ```
-
 
 
 ## Implement contract
