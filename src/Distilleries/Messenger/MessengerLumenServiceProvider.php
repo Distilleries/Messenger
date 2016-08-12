@@ -3,8 +3,6 @@
 use Distilleries\Messenger\Helpers\Message;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Foundation\AliasLoader;
-use Illuminate\Routing\Router;
 
 class MessengerLumenServiceProvider extends ServiceProvider {
 
@@ -62,7 +60,6 @@ class MessengerLumenServiceProvider extends ServiceProvider {
     /**
      * Define the routes for the application.
      *
-     * @param  \Illuminate\Routing\Router  $router
      * @return void
      */
     public function map()
