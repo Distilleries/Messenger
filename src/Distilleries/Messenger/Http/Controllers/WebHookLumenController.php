@@ -11,7 +11,7 @@ namespace Distilleries\Messenger\Http\Controllers;
 use Distilleries\Messenger\Http\Controllers\Base\WebHookBaseTrait;
 use Illuminate\Routing\Controller;
 
-class WebHookController extends Controller
+class WebHookLumenController extends \Laravel\Lumen\Routing\Controller
 {
     use WebHookBaseTrait;
 }
