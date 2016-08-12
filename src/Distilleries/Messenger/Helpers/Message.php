@@ -28,7 +28,7 @@ class Message
     {
         $this->client = $client;
 
-        if ($this->checkConfig($config)) {
+        if ($this->checkConfig($config) && !empty($client)) {
             $this->config = $config;
         } else {
             throw new ConfigException(trans('messenger::errors.config_not_valid'));
