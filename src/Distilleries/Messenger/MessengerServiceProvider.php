@@ -1,6 +1,7 @@
 <?php namespace Distilleries\Messenger;
 
-use Distilleries\Messenge\Helpers\Message;
+use Distilleries\Messenger\Helpers\Message;
+use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Routing\Router;
@@ -40,7 +41,7 @@ class MessengerServiceProvider extends ServiceProvider {
 
         $this->app['messenger'] = $this->app->share(function($app)
         {
-            return new Message($app['config']->get('messenger'));
+            return new Message($app['config']->get('messenger'),new Client());
         });
 
         $this->alias();

@@ -6,10 +6,10 @@
  * Time: 10:39
  */
 
-namespace Distilleries\Messenge\Helpers;
+namespace Distilleries\Messenger\Helpers;
 
 
-use Distilleries\Messenge\Exceptions\ConfigException;
+use Distilleries\Messenger\Exceptions\ConfigException;
 use Distilleries\Messenger\Exceptions\MessengerException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -18,13 +18,17 @@ class FBUser
 {
 
     protected $config = [];
+    protected $client = null;
 
     /**
      * Message constructor.
      * @param array $config
      */
-    public function __construct(array $config)
+    public function __construct(array $config, Client $client)
     {
+
+        $this->client = $client;
+
         if ($this->checkConfig($config)) {
             $this->config = $config;
         } else {
@@ -32,6 +36,23 @@ class FBUser
         }
 
     }
+
+    /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * @return Client|null
+     */
+    public function getClient()
+    {
+        return $this->client;
+    }
+
 
     protected function checkConfig(array $config)
     {
@@ -51,9 +72,8 @@ class FBUser
 
         $data = $data + ['access_token' => $this->config['page_access_token']];
 
-        $client = new Client();
         try {
-            $res = $client->request('GET', $this->config['uri_open_graph'] . $uid, [
+            $res = $this->client->request('GET', $this->config['uri_open_graph'] . $uid, [
                 'query' => $data
             ]);
 

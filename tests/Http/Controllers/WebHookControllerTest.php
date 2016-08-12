@@ -102,6 +102,43 @@ class ComponentControllerTest extends MessengerTestCase
 
     }
 
+    public function testPostMessageNoAnArray()
+    {
+
+        $response = $this->call('POST', config('messenger.uri_webhook'), [
+            'object' => 'page',
+            'entry'  => [
+                [
+                    'messaging' => 'test'
+                ]
+            ],
+        ]);
+
+        $this->assertEquals(200, $response->status());
+    }
+
+    public function testPostMessageEntryNotAnArray()
+    {
+
+        $this->assertHTTPExceptionStatus(403, function () {
+            $this->call('POST', config('messenger.uri_webhook'), [
+                'object' => 'page',
+                'entry'  => 'test'
+            ]);
+        });
+    }
+
+    public function testPostMessageEntryEmpty()
+    {
+
+        $this->assertHTTPExceptionStatus(403, function () {
+            $this->call('POST', config('messenger.uri_webhook'), [
+                'object' => 'page',
+                'entry'  => null
+            ]);
+        });
+    }
+
 
     public function testPostMessageReceivedAuthentication()
     {

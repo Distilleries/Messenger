@@ -1,4 +1,4 @@
-<?php namespace Distilleries\Messenge\Exceptions;
+<?php namespace Distilleries\Messenger\Exceptions;
 
 /**
  * Created by PhpStorm.

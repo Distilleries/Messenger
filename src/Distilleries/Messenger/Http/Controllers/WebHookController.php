@@ -33,15 +33,15 @@ class WebHookController extends Controller
         $object = $request->input('object');
 
         if (empty($object)) {
-            abort(403);
+            return abort(403);
         }
 
         if ($object == 'page') {
             $entry = $request->input('entry');
             $entry = json_decode(json_encode($entry), false);
 
-            if (empty($entry) && !is_array($entry)) {
-                abort(403);
+            if (empty($entry) || !is_array($entry)) {
+                return abort(403);
             }
 
             $result = "";
