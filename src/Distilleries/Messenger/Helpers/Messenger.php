@@ -211,9 +211,13 @@ class Messenger implements MessengerReceiverContract
 
     protected function sayHello($senderID, $messageId)
     {
-        $profile = $this->messenger->getCurrentUserProfile($senderID);
+        try {
+            $profile = $this->messenger->getCurrentUserProfile($senderID);
+            $this->messenger->sendTextMessage($senderID, "Bonjour " . $profile->first_name . ' ' . $profile->last_name);
+        } catch (\Exception $e){
+            $this->messenger->sendTextMessage($senderID, "Bonjour !");
+        }
 
-        $this->messenger->sendTextMessage($senderID, "Bonjour " . $profile->first_name . ' ' . $profile->last_name);
     }
 
     protected function sendButtonWoAreWeMessage($event)
