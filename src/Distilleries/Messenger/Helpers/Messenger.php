@@ -78,15 +78,12 @@ class Messenger implements MessengerReceiverContract
     {
         $delivery   = $event->delivery;
         $messageIDs = $delivery->mids;
-        $watermark  = $delivery->watermark;
 
         if ($messageIDs) {
             foreach ($messageIDs as $messageID) {
                 Log::info("Received delivery confirmation for message ID: " . $messageID);
 
             }
-
-            Log::info("All message before " . $watermark . " were delivered.");
         }
     }
 
@@ -137,9 +134,7 @@ class Messenger implements MessengerReceiverContract
         foreach ($messageAttachments as $attachment) {
             switch ($attachment->type) {
                 case 'image':
-                    $url = (new ImageWatermark($attachment->payload->url, $messageId))->convert();
-
-                    $this->messenger->sendImageMessage($senderID, $url);
+                    $this->messenger->sendImageMessage($senderID, $attachment->payload->url);
                     break;
                 default:
                     $this->messenger->sendTextMessage($senderID, "Message with attachment received");
@@ -217,11 +212,8 @@ class Messenger implements MessengerReceiverContract
     protected function sayHello($senderID, $messageId)
     {
         $profile = $this->messenger->getCurrentUserProfile($senderID);
-        $url     = (new ImageWatermark($profile->profile_pic, $messageId))->convert();
 
         $this->messenger->sendTextMessage($senderID, "Bonjour " . $profile->first_name . ' ' . $profile->last_name);
-        $this->messenger->sendImageMessage($senderID, $url);
-        $this->messenger->sendTextMessage($senderID, "J'ai pimpé ton avatar tu en penses quoi?");
     }
 
     protected function sendButtonWoAreWeMessage($event)
