@@ -39,8 +39,7 @@ class MessengerServiceProvider extends ServiceProvider {
         );
 
 
-        $this->app['messenger'] = $this->app->share(function($app)
-        {
+        $this->app->singleton('messenger', function($app) {
             return new Message($app['config']->get('messenger'),new Client());
         });
 

@@ -8,7 +8,7 @@ class ComponentControllerTest extends MessengerTestCase
     {
         parent::setUp();
 
-        $this->app['Distilleries\Messenger\Contracts\MessengerReceiverContract'] = $this->app->share(function ($app) {
+        $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
             $mock = Mockery::mock('Distilleries\Messenger\Contracts\MessengerReceiverContract')
                 ->shouldReceive(['receivedAuthentication', 'receivedMessage', 'receivedDeliveryConfirmation', 'receivedPostback', 'defaultHookUndefinedAction'])
                 ->getMock();
