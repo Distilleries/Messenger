@@ -6,7 +6,7 @@
  * Time: 17:34
  */
 
-namespace App\Helpers;
+namespace Distilleries\Messenger\Helpers;
 
 class ImageWatermark
 {

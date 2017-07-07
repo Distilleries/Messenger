@@ -6,7 +6,7 @@
  * Time: 09:43
  */
 
-namespace App\Helpers;
+namespace Distilleries\Messenger\Helpers;
 
 
 use Illuminate\Support\Str;

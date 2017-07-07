@@ -6,7 +6,7 @@
  * Time: 16:30
  */
 
-namespace App\Helpers;
+namespace Distilleries\Messenger\Helpers;
 
 use Distilleries\Messenger\Contracts\MessengerReceiverContract;
 use Log;

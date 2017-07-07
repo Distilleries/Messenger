@@ -1,7 +1,7 @@
 <?php namespace Distilleries\Messenger;
 
-use App\Helpers\Messenger;
 use Distilleries\Messenger\Helpers\Message;
+use Distilleries\Messenger\Helpers\Messenger;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\ImageServiceProviderLumen;
