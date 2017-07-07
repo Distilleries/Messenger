@@ -1,10 +1,12 @@
 <?php namespace Distilleries\Messenger;
 
+use App\Helpers\Messenger;
 use Distilleries\Messenger\Helpers\Message;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Routing\Router;
+use Intervention\Image\ImageServiceProvider;
 
 class MessengerServiceProvider extends ServiceProvider {
 
@@ -39,8 +41,14 @@ class MessengerServiceProvider extends ServiceProvider {
         );
 
 
+        $this->app->register(ImageServiceProvider::class);
+
         $this->app->singleton('messenger', function($app) {
             return new Message($app['config']->get('messenger'),new Client());
+        });
+
+        $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
+            return new Messenger();
         });
 
         $this->alias();
