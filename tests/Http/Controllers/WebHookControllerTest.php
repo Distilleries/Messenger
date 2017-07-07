@@ -38,7 +38,7 @@ class ComponentControllerTest extends MessengerTestCase
     {
 
         $this->assertHTTPExceptionStatus(403, function () {
-            $this->call('GET', config('messenger.uri_webhook'));
+            return $this->call('GET', config('messenger.uri_webhook'))->getStatusCode();
         });
     }
 
@@ -46,7 +46,7 @@ class ComponentControllerTest extends MessengerTestCase
     {
 
         $this->assertHTTPExceptionStatus(403, function () {
-            $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'subscribe', 'hub_verify_token' => str_random(20)]);
+            return $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'subscribe', 'hub_verify_token' => str_random(20)])->getStatusCode();
         });
     }
 
@@ -56,7 +56,7 @@ class ComponentControllerTest extends MessengerTestCase
         $token = str_random(40);
         $this->app['config']->set('messenger.validation_token', $token);
         $this->assertHTTPExceptionStatus(403, function () use ($token) {
-            $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'test', 'hub_verify_token' => $token]);
+            return $this->call('GET', config('messenger.uri_webhook'), ['hub_mode' => 'test', 'hub_verify_token' => $token])->getStatusCode();
         });
     }
 
@@ -78,7 +78,7 @@ class ComponentControllerTest extends MessengerTestCase
     public function testPostMessageError()
     {
         $this->assertHTTPExceptionStatus(403, function () {
-            $this->call('POST', config('messenger.uri_webhook'));
+            return $this->call('POST', config('messenger.uri_webhook'))->getStatusCode();
         });
     }
 
@@ -121,10 +121,10 @@ class ComponentControllerTest extends MessengerTestCase
     {
 
         $this->assertHTTPExceptionStatus(403, function () {
-            $this->call('POST', config('messenger.uri_webhook'), [
+            return $this->call('POST', config('messenger.uri_webhook'), [
                 'object' => 'page',
                 'entry'  => 'test'
-            ]);
+            ])->getStatusCode();
         });
     }
 
@@ -132,10 +132,10 @@ class ComponentControllerTest extends MessengerTestCase
     {
 
         $this->assertHTTPExceptionStatus(403, function () {
-            $this->call('POST', config('messenger.uri_webhook'), [
+            return $this->call('POST', config('messenger.uri_webhook'), [
                 'object' => 'page',
                 'entry'  => null
-            ]);
+            ])->getStatusCode();
         });
     }
 
