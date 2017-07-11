@@ -10,6 +10,8 @@ namespace Distilleries\Messenger\Helpers;
 
 use Carbon\Carbon;
 use Distilleries\Messenger\Contracts\MessengerReceiverContract;
+use Distilleries\Messenger\Models\MessengerConfig;
+use Distilleries\Messenger\Models\MessengerLog;
 use Distilleries\Messenger\Models\MessengerUser;
 use Log;
 
@@ -61,9 +63,7 @@ class Messenger implements MessengerReceiverContract
         $messengerUser = $this->getMessengerUser($senderID);
 
         if ($messageText) {
-
             $this->doActionFromGrammar($messageText, $event);
-
         } elseif ($messageAttachments) {
             $this->doActionFromAttachment($messageAttachments, $event);
 
@@ -103,12 +103,27 @@ class Messenger implements MessengerReceiverContract
         }
     }
 
+    protected function handleMessengerConfig($recipientId, $messengerConfig) {
+        $messageData = json_decode($messengerConfig);
+        $messageData['recipient'] = ['id' => $recipientId];
+        $this->messenger->callSendAPI($messageData);
+    }
 
     public function receivedPostback($event)
     {
         $senderID = $event->sender->id;
         $payload = $event->postback->payload;
-        $this->messenger->sendTextMessage($senderID, "Postback called".$payload);
+        $config = MessengerConfig::where('payload', $payload)->first();
+        if ($config) {
+            $this->handleMessengerConfig($senderID, $config);
+        } else {
+            MessengerLog::create([
+                'messenger_user_id' => $senderID,
+                'request' => 'Postback received from facebook',
+                'response' => $payload,
+                'inserted_at' => Carbon::now(),
+            ]);
+        }
     }
 
 

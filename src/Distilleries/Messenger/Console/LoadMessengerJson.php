@@ -78,7 +78,7 @@ class LoadMessengerJson extends Command
 
     protected function saveStartMessage($data) {
         if ($data) {
-            $this->saveMessengerObject($data, "start", "start");
+            $this->saveMessengerObject($data, "start", "start", null, "GET_STARTED_PAYLOAD");
         }
     }
 
