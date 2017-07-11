@@ -12,7 +12,18 @@
         "php": ">=5.6.4",
         "illuminate/support": "5.4.*",
         "intervention/image": "^2.3",
-        "guzzlehttp/guzzle": "^6.2"
+        "guzzlehttp/guzzle": "^6.2",
+        "illuminate/database": "5.4.*",
+        "distilleries/datatable-builder": "2.9.*",
+        "distilleries/form-builder": "2.9.*"
+    },
+    "minimum-stability": "stable",
+    "require-dev": {
+        "orchestra/database": "~3.2",
+        "orchestra/testbench": "~3.4",
+        "phpunit/phpunit": "~4.5",
+        "mockery/mockery": "0.9.*",
+        "distilleries/expendable": "2.16.*"
     },
     "autoload": {
         "classmap": [
@@ -21,12 +32,5 @@
         "psr-4": {
             "Distilleries\\Messenger\\": "src/Distilleries/Messenger"
         }
-    },
-    "minimum-stability": "stable",
-    "require-dev": {
-        "orchestra/database": "~3.2",
-        "orchestra/testbench": "~3.4",
-        "phpunit/phpunit": "~4.5",
-        "mockery/mockery": "0.9.*"
     }
 }

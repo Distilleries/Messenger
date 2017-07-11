@@ -52,6 +52,7 @@ class MessengerServiceProvider extends ServiceProvider {
         });
 
         $this->alias();
+        $this->registerCommands();
     }
 
     /**
@@ -89,5 +90,21 @@ class MessengerServiceProvider extends ServiceProvider {
         {
             require __DIR__ . '/Http/routes.php';
         });
+    }
+
+
+
+    protected function registerCommands()
+    {
+        $file  = app('files');
+        $files = $file->allFiles(__DIR__ . '/Console/');
+
+        foreach ($files as $file)
+        {
+            if (strpos($file->getPathName(), 'Lib') === false)
+            {
+                $this->commands('Distilleries\Messenger\Console\\' . preg_replace('/\.php/i', '', $file->getFilename()));
+            }
+        }
     }
 }

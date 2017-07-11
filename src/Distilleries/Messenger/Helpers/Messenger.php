@@ -8,7 +8,9 @@
 
 namespace Distilleries\Messenger\Helpers;
 
+use Carbon\Carbon;
 use Distilleries\Messenger\Contracts\MessengerReceiverContract;
+use Distilleries\Messenger\Models\MessengerUser;
 use Log;
 
 class Messenger implements MessengerReceiverContract
@@ -55,6 +57,9 @@ class Messenger implements MessengerReceiverContract
         $messageText        = !empty($message->text) ? $message->text : null;
         $messageAttachments = !empty($message->attachments) ? $message->attachments : null;
 
+        $senderID  = $event->sender->id;
+        $messengerUser = $this->getMessengerUser($senderID);
+
         if ($messageText) {
 
             $this->doActionFromGrammar($messageText, $event);
@@ -64,6 +69,17 @@ class Messenger implements MessengerReceiverContract
 
         }
 
+    }
+
+    protected function getMessengerUser($senderId) {
+        $user = MessengerUser::where('sender_id', $senderId)->first();
+        if (!$user) {
+            $profile = $this->messenger->getCurrentUserProfile($senderId);
+            $user = MessengerUser::create(['sender_id' => $senderId, 'email' => $profile->email]);
+        }
+        $user->update([
+            'last_conversation_date' => Carbon::now()
+        ]);
     }
 
 
