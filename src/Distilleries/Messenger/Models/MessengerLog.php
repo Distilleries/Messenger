@@ -20,8 +20,7 @@ class MessengerLog extends BaseModel {
      */
     protected $fillable = [
         'messenger_user_id',
-        'text',
-        'intent',
+        'request',
         'response',
         'inserted_at',
     ];

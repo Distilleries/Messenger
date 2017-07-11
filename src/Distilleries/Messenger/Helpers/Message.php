@@ -9,8 +9,10 @@ namespace Distilleries\Messenger\Helpers;
  * Time: 19:50
  */
 
+use Carbon\Carbon;
 use Distilleries\Messenger\Exceptions\ConfigException;
 use Distilleries\Messenger\Exceptions\MessengerException;
+use Distilleries\Messenger\Models\MessengerLog;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 
@@ -105,10 +107,10 @@ class Message
     }
 
 
-    public function callSendAPI($messageData, $method = "POST")
+    public function callSendAPI($messageData, $uri = 'uri_bot', $method = "POST")
     {
         try {
-            $res = $this->client->request($method, $this->config['uri_bot'], [
+            $res = $this->client->request($method, $this->config[$uri], [
                 'query' => ['access_token' => $this->config['page_access_token']],
                 'json'  => $messageData
             ]);
@@ -116,7 +118,13 @@ class Message
             return $res->getBody()->getContents();
 
         } catch (ClientException $e) {
-
+            if ($e->getResponse() && $e->getResponse()->getBody() && $e->getResponse()->getBody()) {
+                MessengerLog::create([
+                    'request' => json_encode($messageData),
+                    'response' => $e->getResponse()->getBody()->getContents(),
+                    'inserted_at' => Carbon::now()
+                ]);
+            }
             throw new MessengerException(trans('messenger::errors.unable_send_message'), 0, $e);
         }
     }

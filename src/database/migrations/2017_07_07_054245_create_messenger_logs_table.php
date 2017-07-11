@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateMessengerUsersTable extends Migration {
+class CreateMessengerLogsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,13 +12,11 @@ class CreateMessengerUsersTable extends Migration {
 	 */
 	public function up()
 	{
-		
 		Schema::create('messenger_logs', function(Blueprint $table)
 		{
 			$table->bigIncrements('id');
-			$table->string('messenger_user_id');
-			$table->string('text');
-			$table->string('intent');
+			$table->integer('messenger_user_id')->unsigned()->nullable();
+			$table->text('request');
 			$table->text('response');
 			$table->dateTime('inserted_at');
 			$table->foreign('messenger_user_id')->references('id')->on('messenger_users')->onDelete('cascade');

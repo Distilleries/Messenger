@@ -10,8 +10,17 @@ class MessengerConfig extends BaseModel {
         'type',
         'content',
         'group_id',
+        'payload',
         'parent_id'
     ];
+    public $timestamps = false;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'messenger_config';
 
     /**
      * User relationship.

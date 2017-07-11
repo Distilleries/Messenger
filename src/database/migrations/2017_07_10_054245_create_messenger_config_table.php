@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateMessengerUsersTable extends Migration {
+class CreateMessengerConfigTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,15 +12,15 @@ class CreateMessengerUsersTable extends Migration {
 	 */
 	public function up()
 	{
-		
+
 		Schema::create('messenger_config', function(Blueprint $table)
 		{
 			$table->bigIncrements('id');
 			$table->string('type');
-			$table->string('content');
+			$table->text('content')->nullable();
+			$table->string('payload')->nullable();
 			$table->string('group_id')->nullable();
-			$table->integer('parent_id')->nullable();
-			$table->foreign('parent_id')->references('id')->on('messenger_config')->onDelete('cascade');
+			$table->integer('parent_id')->unsigned()->index()->nullable();
 		});
 	}
 

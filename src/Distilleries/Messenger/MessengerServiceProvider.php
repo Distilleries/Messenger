@@ -1,5 +1,6 @@
 <?php namespace Distilleries\Messenger;
 
+use Distilleries\Messenger\Console\LoadMessengerJson;
 use Distilleries\Messenger\Helpers\Message;
 use Distilleries\Messenger\Helpers\Messenger;
 use GuzzleHttp\Client;
@@ -53,7 +54,9 @@ class MessengerServiceProvider extends ServiceProvider {
         });
 
         $this->alias();
-        $this->registerCommands();
+        $this->commands([
+            LoadMessengerJson::class
+        ]);
     }
 
     /**
@@ -91,21 +94,5 @@ class MessengerServiceProvider extends ServiceProvider {
         {
             require __DIR__ . '/Http/routes.php';
         });
-    }
-
-
-
-    protected function registerCommands()
-    {
-        $file  = app('files');
-        $files = $file->allFiles(__DIR__ . '/Console/');
-
-        foreach ($files as $file)
-        {
-            if (strpos($file->getPathName(), 'Lib') === false)
-            {
-                $this->commands('Distilleries\Messenger\Console\\' . preg_replace('/\.php/i', '', $file->getFilename()));
-            }
-        }
     }
 }

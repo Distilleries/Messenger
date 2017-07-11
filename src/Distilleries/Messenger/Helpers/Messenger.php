@@ -107,7 +107,8 @@ class Messenger implements MessengerReceiverContract
     public function receivedPostback($event)
     {
         $senderID = $event->sender->id;
-        $this->messenger->sendTextMessage($senderID, "Postback called");
+        $payload = $event->postback->payload;
+        $this->messenger->sendTextMessage($senderID, "Postback called".$payload);
     }
 
 

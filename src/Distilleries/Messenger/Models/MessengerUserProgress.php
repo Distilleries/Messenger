@@ -10,7 +10,15 @@ class MessengerUserProgress extends BaseModel {
         'messenger_user_id',
         'messenger_config_id'
     ];
+    public $timestamps = false;
 
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'messenger_user_progress';
 
     /**
      * User relationship.
