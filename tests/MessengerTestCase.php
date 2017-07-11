@@ -8,7 +8,7 @@
 
 use \Mockery as m;
 
-abstract class MessengerTestCase extends \Orchestra\Testbench\TestCase
+abstract class MessengerTestCase extends \Orchestra\Testbench\BrowserKit\TestCase
 {
     protected $facade;
 
@@ -26,6 +26,7 @@ abstract class MessengerTestCase extends \Orchestra\Testbench\TestCase
     {
         parent::setUp();
         $this->app['Illuminate\Contracts\Console\Kernel']->call('vendor:publish');
+        $this->artisan('migrate');
         $this->refreshApplication();
     }
 

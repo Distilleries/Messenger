@@ -19,8 +19,8 @@
     },
     "minimum-stability": "stable",
     "require-dev": {
-        "orchestra/database": "~3.2",
-        "orchestra/testbench": "~3.4",
+        "orchestra/database": "~3.3",
+        "orchestra/testbench": "~3.3",
         "phpunit/phpunit": "~4.5",
         "mockery/mockery": "0.9.*",
         "distilleries/expendable": "2.16.*"

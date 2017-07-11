@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "a352f4863a48c1ab0def9b4345e0147f",
+    "content-hash": "b0bb2fd488aa044abda5eeeb52a8a031",
     "packages": [
         {
             "name": "distilleries/datatable",
@@ -2697,16 +2697,16 @@
         },
         {
             "name": "orchestra/database",
-            "version": "v3.4.1",
+            "version": "v3.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/orchestral/database.git",
-                "reference": "e05f52a0e6429fbaf67e67ae497a4abdbb2baea3"
+                "reference": "197153c127c6009a6601bd48fd0621901b08246b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/orchestral/database/zipball/e05f52a0e6429fbaf67e67ae497a4abdbb2baea3",
-                "reference": "e05f52a0e6429fbaf67e67ae497a4abdbb2baea3",
+                "url": "https://api.github.com/repos/orchestral/database/zipball/197153c127c6009a6601bd48fd0621901b08246b",
+                "reference": "197153c127c6009a6601bd48fd0621901b08246b",
                 "shasum": ""
             },
             "require": {
@@ -2747,7 +2747,7 @@
                 "orchestra-platform",
                 "orchestral"
             ],
-            "time": "2017-05-14T13:09:47+00:00"
+            "time": "2017-05-23T02:21:11+00:00"
         },
         {
             "name": "orchestra/testbench",
