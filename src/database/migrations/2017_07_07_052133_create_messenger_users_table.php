@@ -16,7 +16,6 @@ class CreateMessengerUsersTable extends Migration {
 		Schema::create('messenger_users', function(Blueprint $table)
 		{
 			$table->increments('id');
-			$table->string('email');
 			$table->string('sender_id');
 			$table->dateTime('last_conversation_date');
 			$table->timestamps();

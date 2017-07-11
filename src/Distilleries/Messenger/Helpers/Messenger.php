@@ -75,7 +75,7 @@ class Messenger implements MessengerReceiverContract
         $user = MessengerUser::where('sender_id', $senderId)->first();
         if (!$user) {
             $profile = $this->messenger->getCurrentUserProfile($senderId);
-            $user = MessengerUser::create(['sender_id' => $senderId, 'email' => $profile->email]);
+            $user = MessengerUser::create(['sender_id' => $senderId]);
         }
         $user->update([
             'last_conversation_date' => Carbon::now()
@@ -105,7 +105,7 @@ class Messenger implements MessengerReceiverContract
 
     protected function handleMessengerConfig($recipientId, $messengerConfig) {
         $messageData = json_decode($messengerConfig);
-        $messageData['recipient'] = ['id' => $recipientId];
+        $messageData->recipient->id = $recipientId;
         $this->messenger->callSendAPI($messageData);
     }
 

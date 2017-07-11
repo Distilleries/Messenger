@@ -60,7 +60,7 @@ class FBUser
     }
 
 
-    public function getProfile($uid, $fields = ['fields' => 'first_name,last_name,email,profile_pic,locale,timezone,gender'])
+    public function getProfile($uid, $fields = ['fields' => 'first_name,last_name,profile_pic,locale,timezone,gender'])
     {
 
         return $this->callSendAPI($uid, $fields);

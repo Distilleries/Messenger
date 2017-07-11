@@ -4,11 +4,12 @@
 use Distilleries\Expendable\Models\BaseModel;
 
 
-class MessengerUser extends BaseModel {
+class MessengerUserVariable extends BaseModel {
 
     protected $fillable = [
-        'last_conversation_date',
-        'sender_id'
+        'variable',
+        'value',
+        'messenger_user_id'
     ];
 
     /**
@@ -20,9 +21,14 @@ class MessengerUser extends BaseModel {
         'last_conversation_date',
     ];
 
-    public function variables()
-    {
-        return $this->hasMany(MessengerUserVariable::class);
-    }
 
+    /**
+     * User relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo(MessengerUser::class);
+    }
 }
