@@ -16,7 +16,7 @@ class CreateMessengerUserVariablesTable extends Migration {
 		Schema::create('messenger_user_variables', function(Blueprint $table)
 		{
 			$table->increments('id');
-			$table->string('variable');
+			$table->string('name');
 			$table->string('value');
 			$table->integer('messenger_user_id')->unsigned()->index();
 			$table->foreign('messenger_user_id')->references('id')->on('messenger_users')->onDelete('cascade');

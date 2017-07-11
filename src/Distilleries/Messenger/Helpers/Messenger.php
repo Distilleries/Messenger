@@ -19,6 +19,7 @@ class Messenger implements MessengerReceiverContract
 {
 
     public $messenger = null;
+    public $user = null;
 
     /**
      * Messenger constructor.
@@ -75,18 +76,19 @@ class Messenger implements MessengerReceiverContract
         $user = MessengerUser::where('sender_id', $senderId)->first();
         if (!$user) {
             $profile = $this->messenger->getCurrentUserProfile($senderId);
-            $user = MessengerUser::create(['sender_id' => $senderId]);
+            $user = MessengerUser::create(['sender_id' => $senderId, 'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name]);
         }
         $user->update([
-            'last_conversation_date' => Carbon::now()
+            'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name
         ]);
+        $this->$user = $user;
     }
 
 
     /*
      * Delivery Confirmation Event
      *
-     * This event is sent to confirm the delivery of a message. Read more about 
+     * This event is sent to confirm the delivery of a message. Read more about
      * these fields at https://developers.facebook.com/docs/messenger-platform/webhook-reference/message-delivered
      *
      */
@@ -104,8 +106,12 @@ class Messenger implements MessengerReceiverContract
     }
 
     protected function handleMessengerConfig($recipientId, $messengerConfig) {
-        $messageData = json_decode($messengerConfig);
-        $messageData->recipient->id = $recipientId;
+        $messageData = [
+            "message" => json_decode($this->handlePlaceholders($messengerConfig->content)),
+            "recipient" => [
+                "id" => $recipientId
+            ]
+        ];
         $this->messenger->callSendAPI($messageData);
     }
 
@@ -117,13 +123,32 @@ class Messenger implements MessengerReceiverContract
         if ($config) {
             $this->handleMessengerConfig($senderID, $config);
         } else {
+            $user = MessengerUser::where('sender_id', $senderID)->first();
             MessengerLog::create([
-                'messenger_user_id' => $senderID,
+                'messenger_user_id' => $user ? $user->id : null,
                 'request' => 'Postback received from facebook',
                 'response' => $payload,
                 'inserted_at' => Carbon::now(),
             ]);
         }
+    }
+
+    protected function handlePlaceholders($content) {
+        $placeholders = ["first_name", "last_name"];
+        if ($this->user) {
+            foreach ($placeholders as $holder) {
+                if (property_exists($this->user, $holder)) {
+                    $content = preg_replace('/\{\{' . $holder . '\}\}/g', $this->user->{$holder}, $content);
+                } else {
+                    foreach ($this->user->variables as $var) {
+                        if ($var->name == $holder) {
+                            $content = preg_replace('/\{\{' . $holder . '\}\}/g', $this->user->{$var->value}, $content);
+                        }
+                    }
+                }
+            }
+        }
+        return $content;
     }
 
 
@@ -135,25 +160,8 @@ class Messenger implements MessengerReceiverContract
     {
 
         $senderID  = $event->sender->id;
-        $messageId = $event->message->mid;
+        //$messageId = $event->message->mid;
 
-        if (GrammarAnalyser::saySocial($messageText)) {
-            $this->quickReply($senderID);
-        } else {
-            if (GrammarAnalyser::sayHello($messageText)) {
-                $this->sayHello($senderID, $messageId);
-            } else {
-                if (GrammarAnalyser::logoAsking($messageText)) {
-                    $this->sendBBSLogo($senderID);
-                } else {
-                    if (GrammarAnalyser::whoIAmAsking($messageText)) {
-                        $this->sendButtonWoAreWeMessage($event);
-                    } else {
-                        $this->repeatMessage($senderID, $messageText);
-                    }
-                }
-            }
-        }
     }
 
     protected function doActionFromAttachment($messageAttachments, $event)
@@ -172,114 +180,6 @@ class Messenger implements MessengerReceiverContract
                     $this->messenger->sendTextMessage($senderID, "Message with attachment received");
             }
         }
-    }
-
-    protected function repeatMessage($senderID, $messageText)
-    {
-
-        if (strlen($messageText) == 4) {
-            $urlGif = "";
-            $code   = intval(unpack('V', iconv('UTF-8', 'UCS-4LE', $messageText))[1]);
-
-            if ($code == 128008) {
-                $urlGif = "https://media.giphy.com/media/8JIRQqil8mvEA/giphy.gif";
-            }
-            if ($code == 128007) {
-                $urlGif = "https://media.giphy.com/media/g2n5wagSFzBMk/giphy.gif";
-            }
-
-            if ($urlGif == "") {
-                $this->messenger->sendTextMessage($senderID, $code);
-            } else {
-                $this->messenger->sendImageMessage($senderID, $urlGif);
-            }
-
-
-        } else {
-            $this->messenger->sendTextMessage($senderID, $messageText);
-        }
-
-
-    }
-
-    protected function quickReply($senderID)
-    {
-
-        Log::info("Quick reply");
-        $messageData = [
-            'recipient' => ['id' => $senderID],
-            'message'   => [
-                'text'          => 'Réseau social favorie :',
-                "quick_replies" => [
-                    [
-                        "content_type" => "text",
-                        "title"        => "",
-                        "payload"      => "TWITTER",
-                        "image_url"    => env('APP_URL') . '/assets/images/twitter.png'
-                    ],
-                    [
-                        "content_type" => "text",
-                        "title"        => "",
-                        "payload"      => "FACEBOOK",
-                        "image_url"    => env('APP_URL') . '/assets/images/facebook.png'
-                    ],
-                    [
-                        "content_type" => "text",
-                        "title"        => "",
-                        "payload"      => "SNAPCHAT",
-                        "image_url"    => env('APP_URL') . '/assets/images/snapchat.png'
-                    ]
-                ]
-            ]
-        ];
-
-        return $this->messenger->callSendAPI($messageData);
-    }
-
-    protected function sendBBSLogo($senderID)
-    {
-        $this->messenger->sendImageMessage($senderID, env('APP_URL') . '/assets/images/logo.png');
-    }
-
-    protected function sayHello($senderID, $messageId)
-    {
-        try {
-            $profile = $this->messenger->getCurrentUserProfile($senderID);
-            $this->messenger->sendTextMessage($senderID, "Bonjour " . $profile->first_name . ' ' . $profile->last_name);
-        } catch (\Exception $e){
-            $this->messenger->sendTextMessage($senderID, "Bonjour !");
-        }
-
-    }
-
-    protected function sendButtonWoAreWeMessage($event)
-    {
-        $senderID = $event->sender->id;
-
-        $this->messenger->sendCard($senderID, [
-            'template_type' => 'generic',
-            'elements'      => [
-                [
-                    "title"     => "Big Boss Studio",
-                    "image_url" => env('APP_URL') . '/assets/images/logo.png',
-                    "subtitle"  => "something BIG is coming !",
-                    'buttons'   => [
-                        [
-                            'type'  => "web_url",
-                            'url'   => "http://big-boss.com",
-                            'title' => "Viens sur mon site!"
-                        ],
-                        [
-                            'type'    => "phone_number",
-                            'title'   => "Appelle moi!",
-                            'payload' => "+33480805570"
-                        ],
-                    ]
-                ]
-
-            ]
-        ]);
-
     }
 
     protected function persistMenu()

@@ -8,6 +8,8 @@ class MessengerUser extends BaseModel {
 
     protected $fillable = [
         'last_conversation_date',
+        'first_name',
+        'last_name',
         'sender_id'
     ];
 
