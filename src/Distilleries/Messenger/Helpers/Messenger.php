@@ -53,8 +53,11 @@ class Messenger implements MessengerReceiverContract
 
     public function receivedMessage($event)
     {
-
         Log::info(\GuzzleHttp\json_encode($event));
+        if (property_exists($event->message, 'is_echo') && $event->message->is_echo) {
+            Log::info('Was an echo');
+            return;
+        }
 
         $message            = $event->message;
         $messageText        = !empty($message->text) ? $message->text : null;
@@ -79,7 +82,7 @@ class Messenger implements MessengerReceiverContract
             $user = MessengerUser::create(['sender_id' => $senderId, 'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name]);
         }
         $user->update([
-            'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name
+            'last_conversation_date' => Carbon::now()
         ]);
         $this->$user = $user;
     }
@@ -118,6 +121,7 @@ class Messenger implements MessengerReceiverContract
     public function receivedPostback($event)
     {
         $senderID = $event->sender->id;
+
         $payload = $event->postback->payload;
         $config = MessengerConfig::where('payload', $payload)->first();
         if ($config) {
