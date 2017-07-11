@@ -13,6 +13,7 @@ use Distilleries\Messenger\Contracts\MessengerReceiverContract;
 use Distilleries\Messenger\Models\MessengerConfig;
 use Distilleries\Messenger\Models\MessengerLog;
 use Distilleries\Messenger\Models\MessengerUser;
+use Distilleries\Messenger\Models\MessengerUserProgress;
 use Log;
 
 class Messenger implements MessengerReceiverContract
@@ -56,6 +57,7 @@ class Messenger implements MessengerReceiverContract
         Log::info(\GuzzleHttp\json_encode($event));
         if (property_exists($event->message, 'is_echo') && $event->message->is_echo) {
             Log::info('Was an echo');
+
             return;
         }
 
@@ -63,8 +65,8 @@ class Messenger implements MessengerReceiverContract
         $messageText        = !empty($message->text) ? $message->text : null;
         $messageAttachments = !empty($message->attachments) ? $message->attachments : null;
 
-        $senderID  = $event->sender->id;
-        $messengerUser = $this->getMessengerUser($senderID);
+        $senderID = $event->sender->id;
+        $this->getMessengerUser($senderID);
 
         if ($messageText) {
             $this->doActionFromGrammar($messageText, $event);
@@ -75,16 +77,17 @@ class Messenger implements MessengerReceiverContract
 
     }
 
-    protected function getMessengerUser($senderId) {
+    protected function getMessengerUser($senderId)
+    {
         $user = MessengerUser::where('sender_id', $senderId)->first();
         if (!$user) {
             $profile = $this->messenger->getCurrentUserProfile($senderId);
-            $user = MessengerUser::create(['sender_id' => $senderId, 'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name]);
+            $user    = MessengerUser::create(['sender_id' => $senderId, 'last_conversation_date' => Carbon::now(), 'first_name' => $profile->first_name, 'last_name' => $profile->last_name]);
         }
         $user->update([
             'last_conversation_date' => Carbon::now()
         ]);
-        $this->$user = $user;
+        $this->user = $user;
     }
 
 
@@ -108,9 +111,17 @@ class Messenger implements MessengerReceiverContract
         }
     }
 
-    protected function handleMessengerConfig($recipientId, $messengerConfig) {
+    protected function handleMessengerConfig($recipientId, $messengerConfig)
+    {
+        $count = MessengerUserProgress::where('messenger_user_id', $this->user->id)->where('messenger_config_id', $messengerConfig->id)->count();
+        if ($count == 0) {
+            MessengerUserProgress::create([
+                'messenger_user_id'   => $this->user->id,
+                'messenger_config_id' => $messengerConfig->id
+            ]);
+        }
         $messageData = [
-            "message" => json_decode($this->handlePlaceholders($messengerConfig->content)),
+            "message"   => json_decode($this->handlePlaceholders($messengerConfig->content)),
             "recipient" => [
                 "id" => $recipientId
             ]
@@ -120,38 +131,42 @@ class Messenger implements MessengerReceiverContract
 
     public function receivedPostback($event)
     {
+        Log::info('Postback: ' . \GuzzleHttp\json_encode($event));
         $senderID = $event->sender->id;
+        $this->getMessengerUser($senderID);
 
         $payload = $event->postback->payload;
-        $config = MessengerConfig::where('payload', $payload)->first();
+        $config  = MessengerConfig::where('payload', $payload)->first();
         if ($config) {
             $this->handleMessengerConfig($senderID, $config);
         } else {
             $user = MessengerUser::where('sender_id', $senderID)->first();
             MessengerLog::create([
                 'messenger_user_id' => $user ? $user->id : null,
-                'request' => 'Postback received from facebook',
-                'response' => $payload,
-                'inserted_at' => Carbon::now(),
+                'request'           => 'Postback received from facebook',
+                'response'          => $payload,
+                'inserted_at'       => Carbon::now(),
             ]);
         }
     }
 
-    protected function handlePlaceholders($content) {
+    protected function handlePlaceholders($content)
+    {
         $placeholders = ["first_name", "last_name"];
         if ($this->user) {
             foreach ($placeholders as $holder) {
-                if (property_exists($this->user, $holder)) {
-                    $content = preg_replace('/\{\{' . $holder . '\}\}/g', $this->user->{$holder}, $content);
+                if ($this->user->{$holder}) {
+                    $content = preg_replace('/\{\{' . $holder . '\}\}/', $this->user->{$holder}, $content);
                 } else {
                     foreach ($this->user->variables as $var) {
                         if ($var->name == $holder) {
-                            $content = preg_replace('/\{\{' . $holder . '\}\}/g', $this->user->{$var->value}, $content);
+                            $content = preg_replace('/\{\{' . $holder . '\}\}/', $this->user->{$var->value}, $content);
                         }
                     }
                 }
             }
         }
+
         return $content;
     }
 
@@ -162,10 +177,24 @@ class Messenger implements MessengerReceiverContract
 
     protected function doActionFromGrammar($messageText, $event)
     {
-
-        $senderID  = $event->sender->id;
-        //$messageId = $event->message->mid;
-
+        $senderID      = $event->sender->id;
+        $messageConfig = null;
+        if ($event->message->quick_reply) {
+            $payload = MessengerConfig::where('payload', $event->message->quick_reply->payload)->first();
+            if ($payload && $payload->parent_id) {
+                foreach ($this->user->progress as $progress) {
+                    if ($progress->config && $progress->config->id == $payload->parent_id) {
+                        $messageConfig = $payload;
+                        break;
+                    }
+                }
+            } else {
+                $messageConfig = $payload;
+            }
+        }
+        if ($messageConfig) {
+            $this->handleMessengerConfig($senderID, $messageConfig);
+        }
     }
 
     protected function doActionFromAttachment($messageAttachments, $event)

@@ -90,9 +90,6 @@ class LoadMessengerJson extends Command
         if (array_key_exists('text', $data)) {
             $content["text"] = $data['text'];
         }
-        if (array_key_exists('buttons', $data)) {
-            $content["buttons"] = $data['buttons'];
-        }
         $currentConfig = MessengerConfig::create([
             'type' => $type,
             //'content' => json_encode($content),
@@ -101,6 +98,18 @@ class LoadMessengerJson extends Command
             'parent_id' => $parent_id
         ]);
 
+        if (array_key_exists('attachment', $data)) {
+            if (array_key_exists('payload', $data['attachment']) && array_key_exists('buttons', $data['attachment']['payload']) ) {
+                foreach ($data['attachment']['payload']['buttons'] as $key => $button) {
+                    if ($button['type'] == 'postback') {
+                        $payload = uniqid();
+                        $this->saveMessengerObject($button['postback'], $type, $groupId, $currentConfig->id, $payload);
+                        $data['attachment']['payload']['buttons'][$key]['payload'] = $payload;
+                    }
+                }
+            }
+            $content["attachment"] = $data['attachment'];
+        }
         if (array_key_exists('quick_replies', $data)) {
             $quickReplies = [];
             foreach($data['quick_replies'] as $quick_reply) {

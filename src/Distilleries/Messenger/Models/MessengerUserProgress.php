@@ -37,6 +37,6 @@ class MessengerUserProgress extends BaseModel {
      */
     public function config()
     {
-        return $this->belongsTo(MessengerConfig::class);
+        return $this->belongsTo(MessengerConfig::class, 'messenger_config_id');
     }
 }

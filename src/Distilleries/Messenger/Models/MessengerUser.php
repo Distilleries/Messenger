@@ -27,4 +27,9 @@ class MessengerUser extends BaseModel {
         return $this->hasMany(MessengerUserVariable::class);
     }
 
+    public function progress()
+    {
+        return $this->hasMany(MessengerUserProgress::class);
+    }
+
 }
