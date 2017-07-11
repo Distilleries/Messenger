@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use Distilleries\Messenger\Models\MessengerConfig;
+use Distilleries\Messenger\Models\MessengerUserProgress;
 use Illuminate\Console\Command;
 
 class LoadMessengerJson extends Command
@@ -27,6 +29,7 @@ class LoadMessengerJson extends Command
      */
     public function __construct()
     {
+        $this->messenger = app('messenger');
         parent::__construct();
     }
 
@@ -38,6 +41,32 @@ class LoadMessengerJson extends Command
     public function handle()
     {
         $path = storage_path() . "/json/messenger.json";
-        $json = json_decode(file_get_contents($path), true);
+        if (File::exists($path)) {
+            $json = json_decode(file_get_contents($path), true);
+            if ($json) {
+                $this->cleanDatabase();
+                $this->configure($json['config']);
+                $this->saveStartMessage($json['welcome']);
+            }
+        }
+    }
+
+    protected function configure($conf) {
+        if ($conf['start_btn']) {
+            $this->messenger->callSendAPI(["get_started" => ["payload" => "GET_STARTED_PAYLOAD"]]);
+        } else {
+            $this->messenger->callSendAPI(["fields" => ["get_started"]], "DELETE");
+        }
+    }
+
+    protected function cleanDatabase() {
+        MessengerConfig::truncate();
+        MessengerUserProgress::truncate();
+    }
+
+    protected function saveStartMessage($data) {
+        if ($data) {
+            $this->messenger->callSendAPI(["greeting" => ["locale" => "default", "text" => $data]]);
+        }
     }
 }

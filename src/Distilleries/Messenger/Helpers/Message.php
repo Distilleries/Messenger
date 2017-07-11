@@ -105,10 +105,10 @@ class Message
     }
 
 
-    public function callSendAPI($messageData)
+    public function callSendAPI($messageData, $method = "POST")
     {
         try {
-            $res = $this->client->request('POST', $this->config['uri_bot'], [
+            $res = $this->client->request($method, $this->config['uri_bot'], [
                 'query' => ['access_token' => $this->config['page_access_token']],
                 'json'  => $messageData
             ]);

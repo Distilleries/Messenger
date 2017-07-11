@@ -21,6 +21,7 @@ class MessengerServiceProvider extends ServiceProvider {
         $this->loadTranslationsFrom(__DIR__.'/../../lang', $this->package);
         $this->publishes([
             __DIR__.'/../../config/config.php'    => config_path($this->package.'.php'),
+            __DIR__ . '/../../database/migrations/' => base_path('/database/migrations'),
         ]);
 
         if (! $this->app->routesAreCached()) {
