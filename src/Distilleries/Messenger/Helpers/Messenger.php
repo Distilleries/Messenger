@@ -127,8 +127,11 @@ class Messenger implements MessengerReceiverContract
         }
     }
 
-    protected function handleMessengerConfig($recipientId, $messengerConfig, $silent = false)
+    public function handleMessengerConfig($recipientId, $messengerConfig, $silent = false)
     {
+        if (!$this->user) {
+            $this->getMessengerUser($recipientId);
+        }
         if (!$messengerConfig->parent_id) {
             // Delete previous state of this group of questions
             MessengerUserProgress::with('config')->where('messenger_user_id', $this->user->id)->get()->where('config.group_id', $messengerConfig->group_id)->each(function($todelete) {
