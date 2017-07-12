@@ -1,13 +1,12 @@
 <?php
 
-namespace Distilleries\Messenger\Console;
+namespace Distilleries\Messenger\Console\Commands;
 
 use Carbon\Carbon;
 use Distilleries\Messenger\Contracts\MessengerReceiverContract;
 use Distilleries\Messenger\Models\MessengerConfig;
 use Distilleries\Messenger\Models\MessengerLog;
 use Distilleries\Messenger\Models\MessengerUser;
-use Distilleries\Messenger\Models\MessengerUserProgress;
 use Illuminate\Console\Command;
 
 class PlannedMessenger extends Command

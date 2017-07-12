@@ -1,5 +1,6 @@
 <?php namespace Distilleries\Messenger;
 
+use Distilleries\Messenger\Console\Commands\PlannedMessenger;
 use Distilleries\Messenger\Console\LoadMessengerJson;
 use Distilleries\Messenger\Helpers\Message;
 use Distilleries\Messenger\Helpers\Messenger;
@@ -59,8 +60,10 @@ class MessengerServiceProvider extends ServiceProvider {
         });
 
         $this->alias();
+
         $this->commands([
-            LoadMessengerJson::class
+            LoadMessengerJson::class,
+            PlannedMessenger::class
         ]);
     }
 
