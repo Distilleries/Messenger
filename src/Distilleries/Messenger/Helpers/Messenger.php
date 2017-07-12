@@ -191,7 +191,7 @@ class Messenger implements MessengerReceiverContract
         if ($this->user && property_exists($discussion->extra_converted, 'input')) {
             $name = $discussion->extra_converted->input->name;
             if ($name == 'link'){ // Special linker value
-                $this->user->update(['link' => $value]);
+                $this->user->update(['link_id' => $value]);
             }
             $oldValue = $this->user->variables()->where('name', $name)->first();
             if ($oldValue) {
@@ -245,7 +245,7 @@ class Messenger implements MessengerReceiverContract
             }
         }
 
-        if (!$this->proxy || $this->proxy->receivedInput($this->user, $messageText, $discussion)) {
+        if (!$this->proxy || $this->proxy->receivedInput($discussion->extra_converted->input->name, $messageText, $this->user, $discussion)) {
             $this->createVariable($discussion, $messageText);
             $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS));
         }
