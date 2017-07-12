@@ -8,8 +8,19 @@ class MessengerUserProgress extends BaseModel {
 
     protected $fillable = [
         'messenger_user_id',
-        'messenger_config_id'
+        'messenger_config_id',
+        'progression_date'
     ];
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array
+     */
+    protected $dates = [
+        'progression_date',
+    ];
+
     public $timestamps = false;
 
 

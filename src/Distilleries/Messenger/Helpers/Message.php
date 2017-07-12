@@ -106,6 +106,39 @@ class Message
         return $this->callSendAPI($messageData);
     }
 
+    public function sendData($messageData, $recipientId) {
+        if (array_key_exists('text', $messageData) && is_array($messageData['text'])) {
+            foreach ($messageData['text'] as $text) {
+                $multipleMessge = clone $messageData;
+                $multipleMessge['text'] = $text;
+                $this->callSendAPI([
+                    "message"   => $multipleMessge,
+                    "recipient" => [
+                        "id" => $recipientId
+                    ]
+                ]);
+            }
+        } elseif (array_key_exists('attachment', $messageData) && is_array($messageData['attachment'])) {
+            foreach ($messageData['attachment'] as $attachment) {
+                $multipleMessge = clone $messageData;
+                $multipleMessge['attachment'] = $attachment;
+                $this->callSendAPI([
+                    "message"   => $multipleMessge,
+                    "recipient" => [
+                        "id" => $recipientId
+                    ]
+                ]);
+            }
+        } else {
+            $this->callSendAPI([
+                "message"   => $messageData,
+                "recipient" => [
+                    "id" => $recipientId
+                ]
+            ]);
+        }
+    }
+
 
     public function callSendAPI($messageData, $uri = 'uri_bot', $method = "POST")
     {

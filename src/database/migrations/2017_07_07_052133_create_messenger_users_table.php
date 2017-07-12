@@ -19,6 +19,7 @@ class CreateMessengerUsersTable extends Migration {
 			$table->string('sender_id');
 			$table->string('first_name')->nullable();
 			$table->string('last_name')->nullable();
+			$table->string('link_id')->nullable();
 			$table->dateTime('last_conversation_date');
 			$table->timestamps();
 		});

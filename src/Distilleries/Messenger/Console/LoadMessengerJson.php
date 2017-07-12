@@ -82,7 +82,7 @@ class LoadMessengerJson extends Command
         }
     }
 
-    protected function saveMessengerObject($data, $type, $groupId = null, $parent_id = null, $payload = null) {
+    protected function saveMessengerObject($data, $type, $groupId = null, $parent_id = null, $payload = null, $extra = []) {
         if ($groupId == null) {
             $groupId = uniqid();
         }
@@ -101,19 +101,43 @@ class LoadMessengerJson extends Command
         if (array_key_exists('attachment', $data)) {
             if (array_key_exists('payload', $data['attachment']) && array_key_exists('buttons', $data['attachment']['payload']) ) {
                 foreach ($data['attachment']['payload']['buttons'] as $key => $button) {
-                    if ($button['type'] == 'postback') {
+                    if ($button['type'] == 'postback' && array_key_exists('postback', $button)) {
                         $payload = uniqid();
+                        if (array_key_exists('payload', $button)) {
+                            $payload = $button['payload'];
+                        }
                         $this->saveMessengerObject($button['postback'], $type, $groupId, $currentConfig->id, $payload);
                         $data['attachment']['payload']['buttons'][$key]['payload'] = $payload;
+                        unset($data['attachment']['payload']['buttons'][$key]['postback']);
                     }
                 }
             }
             $content["attachment"] = $data['attachment'];
         }
+
+        if (array_key_exists('input', $data)) {
+            $payload = uniqid();
+            if (array_key_exists('payload', $data['input'])) {
+                $payload = $data['input']['payload'];
+            }
+            if (array_key_exists('postback_success', $data['input'])) {
+                $this->saveMessengerObject($data['input']['postback_success'], $type, $groupId, $currentConfig->id, $payload, [MessengerConfig::INPUT_ANSWER_TYPE => MessengerConfig::INPUT_ANSWER_SUCCESS]);
+                unset($data['input']['postback_success']);
+            }
+            if (array_key_exists('postback_failed', $data['input'])) {
+                $this->saveMessengerObject($data['input']['postback_failed'], $type, $groupId, $currentConfig->id, $payload, [MessengerConfig::INPUT_ANSWER_TYPE => MessengerConfig::INPUT_ANSWER_FAILED]);
+                unset($data['input']['postback_failed']);
+            }
+            $extra['input'] = $data['input'];
+            unset($data['input']);
+        }
         if (array_key_exists('quick_replies', $data)) {
             $quickReplies = [];
             foreach($data['quick_replies'] as $quick_reply) {
                 $quickReplyPayload = uniqid();
+                if (array_key_exists('payload', $quick_reply)) {
+                    $quickReplyPayload = $quick_reply['payload'];
+                }
                 if (array_key_exists('postback', $quick_reply)) {
                     $this->saveMessengerObject($quick_reply['postback'], $type, $groupId, $currentConfig->id, $quickReplyPayload);
                     unset($quick_reply['postback']);
@@ -128,6 +152,7 @@ class LoadMessengerJson extends Command
                 $this->saveMessengerObject($reply['postback'], $type, $groupId, $currentConfig->id, uniqid());
             }
         }
+        $currentConfig->update(['extra' => json_encode($extra)]);
         $currentConfig->update(["content" => json_encode($content)]);
     }
 }

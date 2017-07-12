@@ -18,6 +18,7 @@ class CreateMessengerUserProgressTable extends Migration {
 			$table->integer('messenger_user_id')->unsigned()->index();
 			$table->foreign('messenger_user_id')->references('id')->on('messenger_users')->onDelete('cascade');
 			$table->integer('messenger_config_id')->unsigned()->index();
+			$table->dateTime('progression_date');
 		});
 	}
 

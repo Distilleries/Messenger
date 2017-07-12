@@ -18,6 +18,7 @@ class CreateMessengerConfigTable extends Migration {
 			$table->bigIncrements('id');
 			$table->string('type');
 			$table->text('content')->nullable();
+			$table->text('extra')->nullable();
 			$table->string('payload')->nullable();
 			$table->string('group_id')->nullable();
 			$table->integer('parent_id')->unsigned()->index()->nullable();
