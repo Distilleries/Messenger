@@ -45,7 +45,7 @@ class MessengerConfig extends BaseModel {
     static public function getAnswerFromConfig($parent_id, $type = self::INPUT_ANSWER_TYPE) {
         $answers = self::where('parent_id', $parent_id)->get();
         foreach ($answers as $answer) {
-            if (array_key_exists(self::INPUT_ANSWER_TYPE, $answer->extra_converted) && $answer->extra_converted[self::INPUT_ANSWER_TYPE] == $type ) {
+            if ($answer->extra_converted->{self::INPUT_ANSWER_TYPE} && $answer->extra_converted->{self::INPUT_ANSWER_TYPE} == $type ) {
                 return $answer;
             }
         }

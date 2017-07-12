@@ -107,10 +107,10 @@ class Message
     }
 
     public function sendData($messageData, $recipientId) {
-        if (array_key_exists('text', $messageData) && is_array($messageData['text'])) {
-            foreach ($messageData['text'] as $text) {
+        if (property_exists($messageData, 'text') && is_array($messageData->text)) {
+            foreach ($messageData->text as $text) {
                 $multipleMessge = clone $messageData;
-                $multipleMessge['text'] = $text;
+                $multipleMessge->text = $text;
                 $this->callSendAPI([
                     "message"   => $multipleMessge,
                     "recipient" => [
@@ -118,10 +118,10 @@ class Message
                     ]
                 ]);
             }
-        } elseif (array_key_exists('attachment', $messageData) && is_array($messageData['attachment'])) {
-            foreach ($messageData['attachment'] as $attachment) {
+        } elseif (property_exists($messageData, 'attachment') && is_array($messageData->attachment)) {
+            foreach ($messageData->attachment as $attachment) {
                 $multipleMessge = clone $messageData;
-                $multipleMessge['attachment'] = $attachment;
+                $multipleMessge->attachment = $attachment;
                 $this->callSendAPI([
                     "message"   => $multipleMessge,
                     "recipient" => [

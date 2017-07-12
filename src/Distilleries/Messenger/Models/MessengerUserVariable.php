@@ -12,6 +12,8 @@ class MessengerUserVariable extends BaseModel {
         'messenger_user_id'
     ];
 
+    public $timestamps = false;
+
 
     /**
      * User relationship.

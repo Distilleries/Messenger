@@ -3,6 +3,7 @@
 use Distilleries\Messenger\Console\LoadMessengerJson;
 use Distilleries\Messenger\Helpers\Message;
 use Distilleries\Messenger\Helpers\Messenger;
+use Distilleries\Messenger\Proxies\NullMessengerProxy;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\AliasLoader;
@@ -51,6 +52,10 @@ class MessengerServiceProvider extends ServiceProvider {
 
         $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
             return new Messenger();
+        });
+
+        $this->app->singleton('Distilleries\Messenger\Contracts\MessengerProxyContract', function ($app) {
+            return new NullMessengerProxy();
         });
 
         $this->alias();

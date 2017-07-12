@@ -23,6 +23,7 @@ class Messenger implements MessengerReceiverContract
 
     public $messenger = null;
     public $user = null;
+    public $proxy = null;
 
     /**
      * Messenger constructor.
@@ -31,6 +32,7 @@ class Messenger implements MessengerReceiverContract
     public function __construct()
     {
         $this->messenger = app('messenger');
+        $this->proxy = app(MessengerProxyContract::class);
     }
 
 
@@ -83,9 +85,11 @@ class Messenger implements MessengerReceiverContract
 
     protected function isWaitingForInput() {
         $lastDiscuss = $this->user->getLatestDiscussion();
-        if ($lastDiscuss->extra_converted && (array_key_exists('input', $lastDiscuss->extra_converted) ||  array_key_exists(MessengerConfig::INPUT_ANSWER_FAILED, $lastDiscuss->extra_converted))) {
+        if ($lastDiscuss->extra_converted && (array_key_exists('input', $lastDiscuss->extra_converted))) {
+            Log::info("Waiting input");
             return true;
         }
+        Log::info("Not waiting input");
         return false;
     }
 
@@ -123,17 +127,20 @@ class Messenger implements MessengerReceiverContract
         }
     }
 
-    protected function handleMessengerConfig($recipientId, $messengerConfig)
+    protected function handleMessengerConfig($recipientId, $messengerConfig, $silent = false)
     {
+        if (!$messengerConfig->parent_id) {
+            // Delete previous state of this group of questions
+            MessengerUserProgress::with('config')->where('messenger_user_id', $this->user->id)->get()->where('config.group_id', $messengerConfig->group_id)->each(function($todelete) {
+                $todelete->delete();
+            });
+        }
         $count = MessengerUserProgress::where('messenger_user_id', $this->user->id)->where('messenger_config_id', $messengerConfig->id)->count();
-        if ($count == 0) {
-            if (!$messengerConfig->parent_id) {
-                // Delete previous state of this group of questions
-                MessengerUserProgress::with('config')->where('messenger_user_id', $this->user->id)->get()->where('config.group_id', $messengerConfig->group_id)->delete();
-            }
+        if ($count == 0 && $silent == false) {
             MessengerUserProgress::create([
                 'messenger_user_id'   => $this->user->id,
-                'messenger_config_id' => $messengerConfig->id
+                'messenger_config_id' => $messengerConfig->id,
+                'progression_date' => Carbon::now()
             ]);
         }
         $this->messenger->sendData(json_decode($this->handlePlaceholders($messengerConfig->content)), $recipientId);
@@ -181,8 +188,8 @@ class Messenger implements MessengerReceiverContract
     }
 
     protected function createVariable($discussion, $value) {
-        if ($this->user && array_key_exists('input', $discussion->extra_converted)) {
-            $name = $discussion->extra_converted['input']['name'];
+        if ($this->user && property_exists($discussion->extra_converted, 'input')) {
+            $name = $discussion->extra_converted->input->name;
             if ($name == 'link'){ // Special linker value
                 $this->user->update(['link' => $value]);
             }
@@ -207,7 +214,7 @@ class Messenger implements MessengerReceiverContract
     {
         $senderID      = $event->sender->id;
         $messageConfig = null;
-        if ($event->message->quick_reply) {
+        if (property_exists($event->message, 'quick_reply')) {
             $payload = MessengerConfig::where('payload', $event->message->quick_reply->payload)->first();
             if ($payload && $payload->parent_id) {
                 foreach ($this->user->progress as $progress) {
@@ -225,24 +232,22 @@ class Messenger implements MessengerReceiverContract
             $this->handleMessengerConfig($senderID, $messageConfig);
         }
     }
-    protected function doActionFromInput($messageText, $event, MessengerProxyContract $proxy)
+    protected function doActionFromInput($messageText, $event)
     {
+        Log::info('doActionFromInput: ' . $messageText);
         $senderID      = $event->sender->id;
         $discussion = $this->user->getLatestDiscussion();
-        if (!array_key_exists('input', $discussion->extra_converted)) { // This can happened if the user had not answered correctly last time
-            $discussion = $discussion->parent;
-        }
-        if (array_key_exists('regexpr', $discussion->extra_converted['input'])) {
-            $regex = '/' . $discussion->extra_converted['input']['regexpr'] . '/';
+        if ($discussion->extra_converted->input->regexpr) {
+            $regex = '/' . $discussion->extra_converted->input->regexpr . '/';
             if (!preg_match($regex, $messageText)) {
-                $this->handleMessengerConfig($senderID, $discussion->getAnswerFromConfig($discussion->parent_id, MessengerConfig::INPUT_ANSWER_FAILED));
+                $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED), true);
                 return;
             }
         }
 
-        if (!$proxy || $proxy->receivedInput($this->user, $messageText, $discussion)) {
+        if (!$this->proxy || $this->proxy->receivedInput($this->user, $messageText, $discussion)) {
             $this->createVariable($discussion, $messageText);
-            $this->handleMessengerConfig($senderID, $discussion->getAnswerFromConfig($discussion->parent_id, MessengerConfig::INPUT_ANSWER_SUCCESS));
+            $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS));
         }
         return;
     }

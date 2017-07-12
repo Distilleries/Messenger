@@ -40,6 +40,6 @@ class MessengerUser extends BaseModel {
 
 
     public function getLatestDiscussion() {
-        return $this->progress()->sortBy('progression_date', 'desc')->first()->config;
+        return $this->progress->sortByDesc('progression_date')->first()->config;
     }
 }
