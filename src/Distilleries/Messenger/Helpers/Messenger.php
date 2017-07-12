@@ -85,7 +85,7 @@ class Messenger implements MessengerReceiverContract
 
     protected function isWaitingForInput() {
         $lastDiscuss = $this->user->getLatestDiscussion();
-        if ($lastDiscuss->extra_converted && (array_key_exists('input', $lastDiscuss->extra_converted))) {
+        if ($lastDiscuss->extra_converted && (property_exists($lastDiscuss->extra_converted, 'input'))) {
             Log::info("Waiting input");
             return true;
         }

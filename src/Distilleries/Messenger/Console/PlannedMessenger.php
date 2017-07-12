@@ -2,7 +2,11 @@
 
 namespace Distilleries\Messenger\Console;
 
+use Carbon\Carbon;
+use Distilleries\Messenger\Contracts\MessengerReceiverContract;
 use Distilleries\Messenger\Models\MessengerConfig;
+use Distilleries\Messenger\Models\MessengerLog;
+use Distilleries\Messenger\Models\MessengerUser;
 use Distilleries\Messenger\Models\MessengerUserProgress;
 use Illuminate\Console\Command;
 
@@ -22,12 +26,6 @@ class PlannedMessenger extends Command
      */
     protected $description = 'Call the planned crontabs';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $messenger = null;
 
     /**
      * Create a new command instance.
@@ -46,14 +44,46 @@ class PlannedMessenger extends Command
      */
     public function handle()
     {
-        $this->messenger = app('messenger');
-        $path = storage_path("/json/messenger.json")  ;
-        if (\File::exists($path)) {
-            $json = json_decode(file_get_contents($path), true);
-            if ($json) {
-                $this->cleanDatabase();
-                $this->loadConfig($json['config']);
-                $this->saveStartMessage($json['start']);
+        $messenger = app(MessengerReceiverContract::class);
+        $crons = MessengerConfig::where('type', 'cron')->get();
+        foreach ($crons as $cron) {
+            if (property_exists($cron->extra_converted, 'date_field')) {
+                MessengerUser::with('variables')->whereNotNull('link')->each(function($messengerUser) use ($cron, $messenger) {
+                    if (!$messengerUser->variables->contains('name', $cron->group_id) && $messengerUser->link && property_exists($messengerUser->link, $cron->extra_converted->date_field->field)) {
+                        $carbonDate = $messengerUser->link->{$cron->extra_converted->date_field->field}->modify($cron->extra_converted->date_field->modifier);
+                        if ($carbonDate <= Carbon::now()) {
+                            // Trigger
+                            try {
+                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true);
+                            } catch (\Exception $e) {
+                                MessengerLog::create([
+                                    'messenger_user_id' => $messengerUser->id,
+                                    'request' => json_encode($cron),
+                                    'response' => json_encode($e->getMessage()),
+                                    'inserted_at' => Carbon::now()]);
+                            }
+                        }
+                    }
+                });
+            }
+            if (property_exists($cron->extra_converted, 'date_time')) {
+                $carbonDate = new Carbon($cron->extra_converted->date_time);
+                if ($carbonDate <= Carbon::now()) {
+                    MessengerUser::with('variables')->each(function($messengerUser) use ($cron, $messenger) {
+                        if (!$messengerUser->variables->contains('name', $cron->group_id)) {
+                            // Trigger
+                            try {
+                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true);
+                            } catch (\Exception $e) {
+                                MessengerLog::create([
+                                    'messenger_user_id' => $messengerUser->id,
+                                    'request' => json_encode($cron),
+                                    'response' => json_encode($e->getMessage()),
+                                    'inserted_at' => Carbon::now()]);
+                            }
+                        }
+                    });
+                }
             }
         }
     }

@@ -54,6 +54,7 @@ class LoadMessengerJson extends Command
                 $this->cleanDatabase();
                 $this->loadConfig($json['config']);
                 $this->saveStartMessage($json['start']);
+                $this->saveCronMessages($json['cron']);
             }
         }
     }
@@ -74,6 +75,14 @@ class LoadMessengerJson extends Command
     protected function cleanDatabase() {
         MessengerConfig::truncate();
         MessengerUserProgress::truncate();
+    }
+
+    protected function saveCronMessages($data) {
+        if ($data) {
+            foreach ($data as $key => $cron) {
+                $this->saveMessengerObject($cron, "cron", "cron-".$key, null);
+            }
+        }
     }
 
     protected function saveStartMessage($data) {
@@ -151,6 +160,10 @@ class LoadMessengerJson extends Command
             foreach($data['replies'] as $reply) {
                 $this->saveMessengerObject($reply['postback'], $type, $groupId, $currentConfig->id, uniqid());
             }
+        }
+        if (array_key_exists( 'conditions', $data)) {
+            $extra['conditions'] = $data['conditions'];
+            unset($data['conditions']);
         }
         $currentConfig->update(['extra' => json_encode($extra)]);
         $currentConfig->update(["content" => json_encode($content)]);
