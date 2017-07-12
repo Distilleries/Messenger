@@ -238,3 +238,109 @@ Send a picture with a picto on the bottom right`
 
 I customize your profile picture. Do you like it?
 
+
+
+## JSON Structure
+
+```
+  "config": {
+    "start_btn": true,
+    "home_text": false
+  },
+```
+
+- `start_btn` Whether or not the "Start" button is displayed at the first discussion.
+- `home_text` You can put here the greeting text that will be displayed. (https://developers.facebook.com/docs/messenger-platform/messenger-profile/greeting-text)
+
+```
+  "start": {
+  }
+```
+
+- `start` is the very first workflow that will be triggered at the first discussion.
+
+Workflow :
+
+```
+"text"
+```
+When using "text" a simple text is sent to the conversation. It can be an @array, in this case several textes will be send one after the other.
+
+
+```
+  "attachment": {
+    "type": "template",
+    "payload": {
+      "template_type": "button",
+      "text": "Here are the link you are looking for:",
+      "buttons": [
+        {
+          "type": "web_url",
+          "url": "https://github.com/Distilleries/Messenger",
+          "title": "Awesome link",
+          "webview_height_ratio": "full"
+        },
+       {
+         "type":"postback",
+         "title":"Start Chatting",
+         "payload":"USER_DEFINED_PAYLOAD",
+         "postback" : {
+                // ANOTHER WORKFLOW
+         }
+       }
+      ]
+    }
+  }
+```
+
+Instead of a "text", you can also send a default facebook `attachment` (https://developers.facebook.com/docs/messenger-platform/send-api-reference/button-template).
+`buttons` can trigger another `workflow` when the type is set to `postback`.
+
+
+```
+"text"
+"input": {
+      "name": "link",
+      "regexpr": "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$",
+      "postback_failed": {
+        "text": "Invalid address can you retry please?"
+        // YOU CAN USE AN ATTACHMENT INSTEAD OF TEXT HERE
+      },
+      "postback_success": {
+        // ANOTHER WORKFLOW
+      }
+}
+```
+This workflow allows the user to input some variable.
+The variable will be stored in the database once validated by the regexpr (not required).
+You're backend can also implement `Distilleries\Messenger\Contracts\MessengerProxyContract` to be able to add several checks on the input.
+If the input is valid against the regexpr, it will be passed to `MessengerProxyContract@receivedInput`. This method should return `true` to validate the input.
+
+The input name `"link"` is a reserved key word. It will be used to bound the MessengerUser with your own BackendUser using the user input.
+In this example, the bot asks for the user's `email`. Because we used the reserved keyword `link` for the name, once the input has been validated (through the regexpr AND eventually your own backoffice logic), then the MessengerUser will be linked to your backend user object using this value.
+Your backend user object must have been set in the `messenger.php` config file.
+
+
+
+```
+"text"
+"quick_replies": [{
+            "content_type": "text",
+            "title": "Yes I do",
+            "payload": "YES_RECEIVE",
+            "postback": {
+                // ANOTHER WORKFLOW
+            }
+        },
+          {
+            "content_type": "text",
+            "title": "No I don't",
+            "postback": {
+                // ANOTHER WORKFLOW
+            }
+          }]
+```
+
+This will trigger a quick reply prompt to the user (https://developers.facebook.com/docs/messenger-platform/send-api-reference/quick-replies).
+`content-type`, `title` are default facebook parameters, they are directly transmitted to the fb endpoint.
+`payload` is optional (a random key is generated if not set)
