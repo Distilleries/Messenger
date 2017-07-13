@@ -12,7 +12,7 @@ class NullMessengerProxy implements \Distilleries\Messenger\Contracts\MessengerP
         return true;
     }
 
-    public function getPlaceholdersArray($messengerUser, $backendUser)
+    public function getPlaceholdersArray()
     {
         return [];
     }

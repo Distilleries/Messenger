@@ -11,6 +11,6 @@ interface MessengerProxyContract
     // This callback is called the user has been successfully connected
     public function userHasBeenLinked($messengerUser, $backendUser);
 
-    public function getPlaceholdersArray($messengerUser, $backendUser);
+    public function getPlaceholdersArray();
 
 }
