@@ -141,6 +141,9 @@ class Messenger implements MessengerReceiverContract
                 $todelete->delete();
             });
         }
+        if ( property_exists($messengerConfig->extra_converted, 'variable')) {
+            $this->createVariable($messengerConfig, $messengerConfig->extra_converted->variable);
+        }
         $count = MessengerUserProgress::where('messenger_user_id', $this->user->id)->where('messenger_config_id', $messengerConfig->id)->count();
         if ($count == 0 && $silent == false) {
             MessengerUserProgress::create([

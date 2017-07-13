@@ -156,6 +156,10 @@ class LoadMessengerJson extends Command
                 if (array_key_exists('payload', $quick_reply)) {
                     $quickReplyPayload = $quick_reply['payload'];
                 }
+                if (array_key_exists('variable', $quick_reply)) {
+                    $extra['variable'] = $quick_reply['variable'];
+                    unset($quick_reply['variable']);
+                }
                 if (array_key_exists('postback', $quick_reply)) {
                     $this->saveMessengerObject($quick_reply['postback'], $type, $groupId, $currentConfig->id, $quickReplyPayload);
                     unset($quick_reply['postback']);
@@ -173,6 +177,9 @@ class LoadMessengerJson extends Command
         if (array_key_exists('conditions', $data)) {
             $extra['conditions'] = $data['conditions'];
             unset($data['conditions']);
+        }
+        if (array_key_exists('variable', $data)) {
+            $extra['variable'] = $data['variable'];
         }
         $currentConfig->update(['extra' => json_encode($extra)]);
         $currentConfig->update(["content" => json_encode($content)]);
