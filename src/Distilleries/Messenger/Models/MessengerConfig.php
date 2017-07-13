@@ -9,6 +9,9 @@ class MessengerConfig extends BaseModel {
     const INPUT_ANSWER_TYPE = 'answer';
     const INPUT_ANSWER_SUCCESS = 'success';
     const INPUT_ANSWER_FAILED = 'failed';
+    const INPUT_ANSWER_FAILED_UNIQUE = 'failed_unique';
+    const INPUT_ANSWER_FAILED_EXISTS = 'failed_exists';
+    const INPUT_ANSWER_FAILED_PROXY = 'failed_proxy';
 
     protected $fillable = [
         'type',

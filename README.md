@@ -23,6 +23,12 @@ This repo contain some tools to work with facebook messenger bot and  laravel/lu
     1. [getCurrentUserProfile](#getcurrentuserprofile)
     1. [sendCard](#sendcard)
     1. [persistMenu](#persistmenu)
+1. [User Link](#user-link)
+1. [JSON Structure](#json-structure)
+    1. [Configuration](#configuration)
+    1. [Start](#start)
+    1. [Scheduled Tasks](#scheduled-tasks)
+    1. [Basic Workflow](#basic-workflow)
 1. [Example](#example)
 
 
@@ -37,9 +43,9 @@ This repo contain some tools to work with facebook messenger bot and  laravel/lu
 Add Service provider to `bootstrap/app.php`:
 
 ``` php
-   
+
    $app->register(Distilleries\Messenger\MessengerLumenServiceProvider::class);
-   
+
 ```
 
 
@@ -59,7 +65,7 @@ Add Service provider to `config/app.php`:
 ```
 
 And Facade (also in `config/app.php`) replace the laravel facade `Mail`
-   
+
 
 ``` php
     'aliases' => [
@@ -72,7 +78,7 @@ And Facade (also in `config/app.php`) replace the laravel facade `Mail`
 To easily implement the fonctionality for your application I created a `Distilleries\Messenger\Contracts\MessengerReceiverContract`.
 
 
-| Event | Method | Description | 
+| Event | Method | Description |
 | ----- | ------ | ------------|
 | messaging_optins | receivedAuthentication | Subscribes to Authentication Callback via the Send-to-Messenger Plugin |
 | message | receivedMessage | Subscribes to Message Received Callback |
@@ -82,17 +88,17 @@ To easily implement the fonctionality for your application I created a `Distille
 
 
 
-## Change service provider 
+## Change service provider
 
 
 To change the class use go to `app/Providers/MessengerServiceProvider.php` and change the class inside the share function.
 
 ```php
-    
+
     $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
                 return new MyMessengerClass();
     });
-      
+
 ```
 
 ### Example of MessengerContract implementation
@@ -102,7 +108,7 @@ To change the class use go to `app/Providers/MessengerServiceProvider.php` and c
 class MyMessengerClass implements MessengerContract
 {
 
-  
+
     public function receivedAuthentication($event)
     {
         $senderID    = $event->sender->id;
@@ -133,7 +139,7 @@ class MyMessengerClass implements MessengerContract
 
             ]
         ]);
-  
+
     }
 
     public function receivedDeliveryConfirmation($event)
@@ -179,34 +185,34 @@ You have to host your application to become use it. Facebook can't send you a we
 
 [Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/text-message)
 
- ```php 
+ ```php
     Messenger::sendTextMessage($senderID, "Authentication successful");
  ```
- 
+
 ### sendImageMessage
 
 
 [Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/image-attachment)
 
-  ```php 
+  ```php
     Messenger::sendImageMessage($senderID, env('APP_URL') . '/assets/images/logo.png');
-    
-  ``` 
+
+  ```
 ### getCurrentUserProfile
 
 [Officiale documention](https://developers.facebook.com/docs/messenger-platform/user-profile)
 
 
-  ```php 
+  ```php
     Messenger::getCurrentUserProfile($senderID);
-    
+
   ```
-  
+
 ### sendCard
 
 [Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/file-attachment)
 
-  
+
  ```php
          Messenger::sendCard($senderID, [
               'template_type' => 'generic',
@@ -223,11 +229,11 @@ You have to host your application to become use it. Facebook can't send you a we
                           ]
                       ]
                   ]
-  
+
               ]
           ]);
  ```
- 
+
 
 ## Example
 On this messenger class you can say `hi` and the bot give you an answer like this :
@@ -239,9 +245,55 @@ Send a picture with a picto on the bottom right`
 I customize your profile picture. Do you like it?
 
 
+## User Link
+You can easily link your backend user model with MessengerUser, and thus having access to all the stored input asked by the bot to the user.
+
+In the `messenger.php` config file, do not forget to setup these values :
+
+```
+'user_link_class'   => 'App\Models\MyModel',
+'user_link_field'   => 'field'
+```
+
+And in your `messenger.json` file, add an input with the name `link` to your workflow (mostlikely at the starting workflow).
+
+Once this setup is done, the user (validated) input will be stored as a link between your backend user `user_link_class` and `MessengerUser` using the field `user_link_field`.
+
+### example
+
+
+> _messenger.php_
+```
+'user_link_class'   => 'App\Models\User',
+'user_link_field'   => 'email'
+```
+> _messenger.json_
+```
+{
+  "config": {
+    "start_btn": true,
+    "home_text": false
+  },
+  "start": {
+    "text": "Can you please provide your email address, so I can check if I kwow you?",
+    "input": {
+      "name": "link",
+      "regexpr": "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$",
+      "postback_failed": {
+        "text": "This email seems not valid to me... Can you retype ?"
+      },
+      "postback_success": {
+        "text": "I've found you in our database, cheers."
+      }
+    }
+  },
+```
+The bot configured above will ask for the user's email. If this email match the regexpr, it will be saved in the database and the `MessengerUser` will be linked to the `App\Models\User` using the `App\Models\User@email` attribtue.
+
 
 ## JSON Structure
 
+### Configuration
 ```
   "config": {
     "start_btn": true,
@@ -252,14 +304,59 @@ I customize your profile picture. Do you like it?
 - `start_btn` Whether or not the "Start" button is displayed at the first discussion.
 - `home_text` You can put here the greeting text that will be displayed. (https://developers.facebook.com/docs/messenger-platform/messenger-profile/greeting-text)
 
+### Start
+
+`start` is the very first workflow that will be triggered at the first discussion.
+
 ```
   "start": {
   }
 ```
 
-- `start` is the very first workflow that will be triggered at the first discussion.
 
-Workflow :
+### Scheduled tasks
+
+You can schedule messages to be send later.
+There is two different ways:
+
+1. Using `date_time`:
+You can send a message at the exact specified time. It will be parsed using Carbon's constructor
+`new Carbon($date_time);`
+```
+  "cron": [
+    {
+      "conditions": {
+        "date_time": "2017-07-12 16:55:00"
+      },
+      "text": "Hello, it is 16:55 today."
+      // YOU CAN PUT HERE AN ATTACHMENT INSTEAD OF THE TEXT
+    }
+  ]
+```
+
+2. Using `date_time`:
+You can send a message using a datetime stored in your main user model. `field` is the attribute concerned in your backend user model. It will be parsed using DateTime's modify method.
+`$date_now->modify($modifier)`
+```
+  "cron": [
+    {
+      "conditions": {
+        "date_field": {
+          "field": "inserted_at",
+          "modifier": "+1 days"
+        }
+      },
+      "text": "Hello, I'm informing you that in one day, good things will happen"
+      // YOU CAN PUT HERE AN ATTACHMENT INSTEAD OF THE TEXT
+    }
+  ]
+```
+
+In the example above, the message is sent 1 day after the `inserted_at` date of the backend user.
+
+
+
+### Basic workflow
 
 ```
 "text"

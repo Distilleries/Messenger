@@ -71,8 +71,8 @@ class PlannedMessenger extends Command
                     }
                 });
             }
-            if (property_exists($cron->extra_converted, 'date_time')) {
-                $carbonDate = new Carbon($cron->extra_converted->date_time);
+            if (property_exists($cron->extra_converted->conditions, 'date_time')) {
+                $carbonDate = new Carbon($cron->extra_converted->conditions->date_time);
                 if ($carbonDate <= Carbon::now()) {
                     MessengerUser::with('variables')->each(function($messengerUser) use ($cron, $messenger) {
                         if (!$messengerUser->variables->contains('name', $cron->group_id)) {

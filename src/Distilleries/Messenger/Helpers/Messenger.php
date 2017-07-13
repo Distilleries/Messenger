@@ -247,10 +247,24 @@ class Messenger implements MessengerReceiverContract
                 return;
             }
         }
-
+        if (property_exists($discussion->extra_converted->input, 'unique') && $discussion->extra_converted->input->unique && MessengerUserVariable::where('value', $messageText)->where('name', $discussion->extra_converted->input->name)->count()) {
+            $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_UNIQUE), true);
+            return;
+        }
+        if ($discussion->extra_converted->input->name == 'link' && MessengerConfig::where('group_id', $discussion->group_id)->where('')) {
+            $backendUserModel = app(config('messenger.user_link_class'));
+            $exists = $backendUserModel::where(config('messenger.user_link_field', $messageText))->count();
+            $existsAnswer = MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_EXISTS);
+            if (!$exists && $existsAnswer) {
+                $this->handleMessengerConfig($senderID, $existsAnswer, true);
+                return;
+            }
+        }
         if (!$this->proxy || $this->proxy->receivedInput($discussion->extra_converted->input->name, $messageText, $this->user, $discussion)) {
             $this->createVariable($discussion, $messageText);
             $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS));
+        } else {
+            $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_PROXY), true);
         }
         return;
     }
