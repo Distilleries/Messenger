@@ -8,4 +8,7 @@ interface MessengerProxyContract
     // If this method returns false, the input will fail
     public function receivedInput($inputName, $inputValue, $messengerUser, $messengerConfig);
 
+    // This callback is called the user has been successfully connected
+    public function userHasBeenLinked($messengerUser, $backendUser);
+
 }
