@@ -55,6 +55,8 @@ class LoadMessengerJson extends Command
                 $this->loadConfig($json['config']);
                 $this->saveStartMessage($json['start']);
                 $this->saveCronMessages($json['cron']);
+                $this->saveFreeMessages($json['free']);
+                $this->saveDefaultMessages($json['default']);
             }
         }
     }
@@ -81,17 +83,35 @@ class LoadMessengerJson extends Command
 
     protected function saveCronMessages($data)
     {
-        if ($data) {
-            foreach ($data as $key => $cron) {
-                $this->saveMessengerObject($cron, "cron", "cron-" . $key, null);
-            }
+        if (!is_array($data)) {
+            $data = [$data];
+        }
+        foreach ($data as $key => $cron) {
+            $this->saveMessengerObject($cron, "cron", "cron-" . $key, null);
         }
     }
 
     protected function saveStartMessage($data)
     {
-        if ($data) {
-            $this->saveMessengerObject($data, "start", "start", null, "GET_STARTED_PAYLOAD");
+        $this->saveMessengerObject($data, "start", "start", null, "GET_STARTED_PAYLOAD");
+    }
+
+    protected function saveFreeMessages($data)
+    {
+        if (!is_array($data)) {
+            $data = [$data];
+        }
+        foreach ($data as $key => $cron) {
+            $this->saveMessengerObject($cron, "free", "free-" . $key, null);
+        }
+    }
+    protected function saveDefaultMessages($data)
+    {
+        if (!is_array($data)) {
+            $data = [$data];
+        }
+        foreach ($data as $key => $cron) {
+            $this->saveMessengerObject($cron, "default", "default-" . $key, null);
         }
     }
 
@@ -171,12 +191,16 @@ class LoadMessengerJson extends Command
         }
         if (array_key_exists('replies', $data)) {
             foreach ($data['replies'] as $reply) {
-                $this->saveMessengerObject($reply['postback'], $type, $groupId, $currentConfig->id, uniqid());
+                $this->saveMessengerObject($reply, $type, $groupId, $currentConfig->id, uniqid());
             }
         }
         if (array_key_exists('conditions', $data)) {
             $extra['conditions'] = $data['conditions'];
             unset($data['conditions']);
+        }
+        if (array_key_exists('keywords', $data)) {
+            $extra['keywords'] = $data['keywords'];
+            unset($data['keywords']);
         }
         if (array_key_exists('variable', $data)) {
             $extra['variable'] = $data['variable'];

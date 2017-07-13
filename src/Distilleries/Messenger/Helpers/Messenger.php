@@ -229,6 +229,7 @@ class Messenger implements MessengerReceiverContract
     {
         $senderID      = $event->sender->id;
         $messageConfig = null;
+        //Check if the grammar is a quick reply
         if (property_exists($event->message, 'quick_reply')) {
             $payload = MessengerConfig::where('payload', $event->message->quick_reply->payload)->first();
             if ($payload && $payload->parent_id) {
@@ -241,11 +242,48 @@ class Messenger implements MessengerReceiverContract
             } else {
                 $messageConfig = $payload;
             }
+            if ($messageConfig) {
+                $this->handleMessengerConfig($senderID, $messageConfig);
+                return ;
+            }
         }
+        //Check if the grammar is a defined reply from the last discussion
+        $latestDiscuss = $this->user->getLatestDiscussion();
+        $potentialReplies = MessengerConfig::where('parent_id', $latestDiscuss->id)->get();
+        foreach ($potentialReplies as $potentialReply) {
+            if (property_exists($potentialReply->extra_converted, 'keywords')) {
+                foreach ($potentialReply->extra_converted->keywords as $keyword) {
+                    if ($this->verifyConditions($potentialReply) && strpos($messageText, $keyword) !== false) {
+                        $this->handleMessengerConfig($senderID, $potentialReply);
+                        return;
+                    }
+                }
+            }
+        }
+
+        //Check if the grammar is a free text
+        $freeTexts = MessengerConfig::where('group', 'free')->whereNull('parent_id')->get();
+        foreach ($freeTexts as $freeText) {
+            foreach ($freeText->extra_converted->keywords as $keyword) {
+                if ($this->verifyConditions($freeText) && strpos($messageText, $keyword) !== false) {
+                    $this->handleMessengerConfig($senderID, $freeText);
+                    return;
+                }
+            }
+        }
+
+        //Send default text
+        $defaultTexts = MessengerConfig::where('group', 'default')->whereNull('parent_id')->get();
+        foreach ($defaultTexts as $defaultText) {
+            if ($this->verifyConditions($defaultText)) {
+                $this->handleMessengerConfig($senderID, $defaultText);
+                return;
+            }
+        }
+        $error=new stdClass();
+        $error->text = 'No default text defined.';
+        $this->messenger->sendData($error, $recipientId);
         // Quick reply or reply detected
-        if ($messageConfig) {
-            $this->handleMessengerConfig($senderID, $messageConfig);
-        }
     }
 
     public function verifyConditions($config)
