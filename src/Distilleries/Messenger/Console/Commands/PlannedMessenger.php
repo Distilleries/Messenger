@@ -49,12 +49,13 @@ class PlannedMessenger extends Command
         foreach ($crons as $cron) {
             if (property_exists($cron->extra_converted->conditions, 'date_field')) {
                 MessengerUser::with('variables')->whereNotNull('link_id')->each(function($messengerUser) use ($cron, $messenger) {
+                    $messenger->user = $messengerUser;
                     if (!$messengerUser->variables->contains('name', $cron->group_id) && $messengerUser->link && $messengerUser->link->getAttributeValue($cron->extra_converted->conditions->date_field->field)) {
                         $carbonDate = $messengerUser->link->getAttributeValue($cron->extra_converted->conditions->date_field->field)->modify($cron->extra_converted->conditions->date_field->modifier);
-                        if ($carbonDate <= Carbon::now()) {
+                        if ($carbonDate <= Carbon::now() && $messenger->verifyConditions($cron, $messengerUser)) {
                             // Trigger
                             try {
-                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true);
+                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true, $messengerUser);
                                 MessengerUserVariable::create([
                                     'name' => $cron->group_id,
                                     'value' => '1',
@@ -75,10 +76,11 @@ class PlannedMessenger extends Command
                 $carbonDate = new Carbon($cron->extra_converted->conditions->date_time);
                 if ($carbonDate <= Carbon::now()) {
                     MessengerUser::with('variables')->each(function($messengerUser) use ($cron, $messenger) {
-                        if (!$messengerUser->variables->contains('name', $cron->group_id)) {
+                        $messenger->user = $messengerUser;
+                        if (!$messengerUser->variables->contains('name', $cron->group_id) && $messenger->verifyConditions($cron, $messengerUser)) {
                             // Trigger
                             try {
-                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true);
+                                $messenger->handleMessengerConfig($messengerUser->sender_id, $cron, true, $messengerUser);
                                 MessengerUserVariable::create([
                                     'name' => $cron->group_id,
                                     'value' => '1',

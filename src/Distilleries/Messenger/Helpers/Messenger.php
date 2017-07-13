@@ -188,6 +188,10 @@ class Messenger implements MessengerReceiverContract
                     }
                 }
             }
+            $placeholders = $this->proxy->getPlaceholdersArray($this->user);
+            foreach ($placeholders as $key => $holder) {
+                $content = preg_replace('/\{\{' . $key . '\}\}/', $holder($this->user, $this->user->link), $content);
+            }
         }
 
         return $content;
