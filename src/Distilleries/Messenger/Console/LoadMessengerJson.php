@@ -196,11 +196,9 @@ class LoadMessengerJson extends Command
         }
         if (array_key_exists('conditions', $data)) {
             $extra['conditions'] = $data['conditions'];
-            unset($data['conditions']);
         }
         if (array_key_exists('keywords', $data)) {
             $extra['keywords'] = $data['keywords'];
-            unset($data['keywords']);
         }
         if (array_key_exists('variable', $data)) {
             $extra['variable'] = $data['variable'];

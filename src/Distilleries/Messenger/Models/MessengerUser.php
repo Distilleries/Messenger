@@ -4,7 +4,8 @@
 use Distilleries\Expendable\Models\BaseModel;
 
 
-class MessengerUser extends BaseModel {
+class MessengerUser extends BaseModel
+{
 
     protected $fillable = [
         'last_conversation_date',
@@ -39,7 +40,12 @@ class MessengerUser extends BaseModel {
     }
 
 
-    public function getLatestDiscussion() {
-        return $this->progress->sortByDesc('progression_date')->first()->config;
+    public function getLatestDiscussion()
+    {
+        $first = $this->progress->sortByDesc('progression_date')->first();
+        if ($first) {
+            return $first->config;
+        }
+        return null;
     }
 }

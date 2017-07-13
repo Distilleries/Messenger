@@ -86,7 +86,7 @@ class Messenger implements MessengerReceiverContract
     protected function isWaitingForInput()
     {
         $lastDiscuss = $this->user->getLatestDiscussion();
-        if ($lastDiscuss->extra_converted && (property_exists($lastDiscuss->extra_converted, 'input'))) {
+        if ($lastDiscuss && $lastDiscuss->extra_converted && (property_exists($lastDiscuss->extra_converted, 'input'))) {
             Log::info("Waiting input");
 
             return true;
@@ -141,8 +141,19 @@ class Messenger implements MessengerReceiverContract
                 $todelete->delete();
             });
         }
-        if ( property_exists($messengerConfig->extra_converted, 'variable')) {
-            $this->createVariable($messengerConfig, $messengerConfig->extra_converted->variable);
+        if ( $messengerConfig->extra_converted && property_exists($messengerConfig->extra_converted, 'variable')) {
+            // delete siblings variable (no concurrence)
+            if ($messengerConfig->parent) {
+                $siblings = MessengerConfig::where('parent_id')->get();
+                foreach ($siblings as $sibling) {
+                    if ($sibling->extra_converted && property_exists($sibling->extra_converted, 'variable')) {
+                        $this->user->variables()->where('name', $sibling->extra_converted->variable)->each(function($var) {
+                            $var->delete();
+                        });
+                    }
+                }
+            }
+            $this->createVariable($messengerConfig->extra_converted->variable, true);
         }
         $count = MessengerUserProgress::where('messenger_user_id', $this->user->id)->where('messenger_config_id', $messengerConfig->id)->count();
         if ($count == 0 && $silent == false) {
@@ -200,7 +211,7 @@ class Messenger implements MessengerReceiverContract
         return $content;
     }
 
-    protected function createVariable($discussion, $value)
+    protected function createInputVariable($discussion, $value)
     {
         if ($this->user && property_exists($discussion->extra_converted, 'input')) {
             $name = $discussion->extra_converted->input->name;
@@ -208,6 +219,13 @@ class Messenger implements MessengerReceiverContract
                 $this->user->update(['link_id' => $value]);
                 $this->user->fresh('link');
             }
+            $this->createVariable($name, $value);
+        }
+    }
+
+    protected function createVariable($name, $value)
+    {
+        if ($this->user) {
             $oldValue = $this->user->variables()->where('name', $name)->first();
             if ($oldValue) {
                 $oldValue->update(['value' => $value]);
@@ -249,20 +267,22 @@ class Messenger implements MessengerReceiverContract
         }
         //Check if the grammar is a defined reply from the last discussion
         $latestDiscuss = $this->user->getLatestDiscussion();
-        $potentialReplies = MessengerConfig::where('parent_id', $latestDiscuss->id)->get();
-        foreach ($potentialReplies as $potentialReply) {
-            if (property_exists($potentialReply->extra_converted, 'keywords')) {
-                foreach ($potentialReply->extra_converted->keywords as $keyword) {
-                    if ($this->verifyConditions($potentialReply) && strpos($messageText, $keyword) !== false) {
-                        $this->handleMessengerConfig($senderID, $potentialReply);
-                        return;
+        if ($latestDiscuss) {
+            $potentialReplies = MessengerConfig::where('parent_id', $latestDiscuss->id)->get();
+            foreach ($potentialReplies as $potentialReply) {
+                if (property_exists($potentialReply->extra_converted, 'keywords')) {
+                    foreach ($potentialReply->extra_converted->keywords as $keyword) {
+                        if ($this->verifyConditions($potentialReply) && strpos($messageText, $keyword) !== false) {
+                            $this->handleMessengerConfig($senderID, $potentialReply);
+                            return;
+                        }
                     }
                 }
             }
         }
 
         //Check if the grammar is a free text
-        $freeTexts = MessengerConfig::where('group', 'free')->whereNull('parent_id')->get();
+        $freeTexts = MessengerConfig::where('type', 'free')->whereNull('parent_id')->get();
         foreach ($freeTexts as $freeText) {
             foreach ($freeText->extra_converted->keywords as $keyword) {
                 if ($this->verifyConditions($freeText) && strpos($messageText, $keyword) !== false) {
@@ -273,16 +293,16 @@ class Messenger implements MessengerReceiverContract
         }
 
         //Send default text
-        $defaultTexts = MessengerConfig::where('group', 'default')->whereNull('parent_id')->get();
+        $defaultTexts = MessengerConfig::where('type', 'default')->whereNull('parent_id')->get();
         foreach ($defaultTexts as $defaultText) {
             if ($this->verifyConditions($defaultText)) {
                 $this->handleMessengerConfig($senderID, $defaultText);
                 return;
             }
         }
-        $error=new stdClass();
+        $error=new \stdClass();
         $error->text = 'No default text defined.';
-        $this->messenger->sendData($error, $recipientId);
+        $this->messenger->sendData($error, $senderID);
         // Quick reply or reply detected
     }
 
@@ -306,6 +326,28 @@ class Messenger implements MessengerReceiverContract
                     foreach ($userProgressCondition as $userProgressPayload) {
                         if (!in_array($userProgressPayload, $userProgressArray)) {
                             return false;
+                        }
+                    }
+                }
+                if (property_exists($config->extra_converted->conditions, 'date_field')) {
+                    if ($this->user->link && $this->user->link->getAttributeValue($config->extra_converted->conditions->date_field->field)) {
+                        $carbonDate = $this->user->link->getAttributeValue($config->extra_converted->conditions->date_field->field);
+                        if (property_exists($config->extra_converted->conditions->date_field, 'modifier')) {
+                            $carbonDate->modify($config->extra_converted->conditions->date_field->modifier);
+                        }
+                        $cond = false;
+                        if (!property_exists($config->extra_converted->conditions->date_field, 'type') || $config->extra_converted->conditions->date_field->type == 'after') {
+                            if ($carbonDate <= Carbon::now()) {
+                                $cond = true;
+                            }
+                        }
+                        if (property_exists($config->extra_converted->conditions->date_field, 'type') && $config->extra_converted->conditions->date_field->type == 'before') {
+                            if ($carbonDate >= Carbon::now()) {
+                                $cond = true;
+                            }
+                        }
+                        if (!$cond) {
+                            return $cond;
                         }
                     }
                 }
@@ -372,7 +414,7 @@ class Messenger implements MessengerReceiverContract
         }
 
         if (!$this->proxy || $this->proxy->receivedInput($discussion->extra_converted->input->name, $messageText, $this->user, $discussion)) {
-            $this->createVariable($discussion, $messageText);
+            $this->createInputVariable($discussion, $messageText);
             $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS));
             $this->proxy->userHasBeenLinked($this->user, $this->user->link);
         } else {
