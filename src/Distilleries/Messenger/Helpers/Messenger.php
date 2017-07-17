@@ -141,18 +141,18 @@ class Messenger implements MessengerReceiverContract
                 $todelete->delete();
             });
         }
-        if ( $messengerConfig->extra_converted && property_exists($messengerConfig->extra_converted, 'variable')) {
-            // delete siblings variable (no concurrence)
-            if ($messengerConfig->parent) {
-                $siblings = MessengerConfig::where('parent_id')->get();
-                foreach ($siblings as $sibling) {
-                    if ($sibling->extra_converted && property_exists($sibling->extra_converted, 'variable')) {
-                        $this->user->variables()->where('name', $sibling->extra_converted->variable)->each(function($var) {
-                            $var->delete();
-                        });
-                    }
+        // delete siblings variable (no concurrence)
+        if ($messengerConfig->parent) {
+            $siblings = MessengerConfig::where('parent_id')->get();
+            foreach ($siblings as $sibling) {
+                if ($sibling->extra_converted && property_exists($sibling->extra_converted, 'variable')) {
+                    $this->user->variables()->where('name', $sibling->extra_converted->variable)->each(function($var) {
+                        $var->delete();
+                    });
                 }
             }
+        }
+        if ( $messengerConfig->extra_converted && property_exists($messengerConfig->extra_converted, 'variable')) {
             $this->createVariable($messengerConfig->extra_converted->variable, true);
         }
         $count = MessengerUserProgress::where('messenger_user_id', $this->user->id)->where('messenger_config_id', $messengerConfig->id)->count();
