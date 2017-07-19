@@ -11,30 +11,28 @@ This repo contain some tools to work with facebook messenger bot and  laravel/lu
 
 
 ## Table of contents
-1. [Installation](#installation)
-1. [Implement contract](#implement-contract)
-1. [Change service provider ](#change-service-provider)
-1. [Example of MessengerContract implementation](#example-of-messengercontract-implementation)
+1. [Installation For Lumen](#installation-for-lumen)
+1. [Installation For Laravel](#installation-for-laravel)
 1. [Create application](#create-application)
+1. [Configure your json file](#configure-your-json-file)
 1. [Host your application](#host-your-application)
-1. [Facade](#facade)
-    1. [sendTextMessage](#sendtextmessage)
-    1. [sendImageMessage](#sendimagemessage)
-    1. [getCurrentUserProfile](#getcurrentuserprofile)
-    1. [sendCard](#sendcard)
-    1. [persistMenu](#persistmenu)
 1. [User Link](#user-link)
 1. [JSON Structure](#json-structure)
     1. [Configuration](#configuration)
     1. [Start](#start)
+    1. [Free input](#free-input)
+    1. [Default answers](#default-answers)
     1. [Scheduled Tasks](#scheduled-tasks)
+    1. [Conditions](#conditions)
     1. [Basic Workflow](#basic-workflow)
-1. [Example](#example)
+1. [Proxy](#proxy)
+    1. [Implement contract](#implement-contract)
+    1. [Change service provider ](#change-service-provider)
 
 
 
 
-##Installation for Laravel
+## Installation for Lumen
 
 `composer required distilleries/messenger`
 
@@ -49,7 +47,13 @@ Add Service provider to `bootstrap/app.php`:
 ```
 
 
-##Installation for Lumen
+In your `Console/Kernel`, configure the scheduler:
+
+```
+$schedule->command('messenger:cron')->hourly();
+```
+
+## Installation for Laravel
 
 `composer required distilleries/messenger`
 
@@ -73,89 +77,10 @@ And Facade (also in `config/app.php`) replace the laravel facade `Mail`
     ]
 ```
 
-
-## Implement contract
-To easily implement the fonctionality for your application I created a `Distilleries\Messenger\Contracts\MessengerReceiverContract`.
-
-
-| Event | Method | Description |
-| ----- | ------ | ------------|
-| messaging_optins | receivedAuthentication | Subscribes to Authentication Callback via the Send-to-Messenger Plugin |
-| message | receivedMessage | Subscribes to Message Received Callback |
-| message_deliveries | receivedDeliveryConfirmation | Subscribes to Message Delivered Callback |
-| messaging_postbacks | receivedPostback | Subscribes to Postback Received Callback |
-| all other | defaultHookUndefinedAction | Call when the other methods was no called |
-
-
-
-## Change service provider
-
-
-To change the class use go to `app/Providers/MessengerServiceProvider.php` and change the class inside the share function.
-
-```php
-
-    $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
-                return new MyMessengerClass();
-    });
+In your `Console/Kernel`, configure the scheduler:
 
 ```
-
-### Example of MessengerContract implementation
-
-```php
-
-class MyMessengerClass implements MessengerContract
-{
-
-
-    public function receivedAuthentication($event)
-    {
-        $senderID    = $event->sender->id;
-        Messenger::sendTextMessage($senderID, "Authentication successful");
-    }
-
-
-    public function receivedMessage($event)
-    {
-        $senderID    = $event->sender->id;
-        Messenger::sendTextMessage($senderID, 'Test');
-        Messenger::sendImageMessage($senderID, env('APP_URL') . '/assets/images/logo.png');,
-        Messenger::sendCard($senderID, [
-            'template_type' => 'generic',
-            'elements'      => [
-                [
-                    "title"     => "Messenger Boilerplate",
-                    "image_url" => env('APP_URL') . '/assets/images/logo.png',
-                    "subtitle"  => "example subtitle",
-                    'buttons'   => [
-                        [
-                            'type'  => "web_url",
-                            'url'   => "https://github.com/Distilleries/lumen-messenger-boilerplate",
-                            'title' => "Come download it!"
-                        ]
-                    ]
-                ]
-
-            ]
-        ]);
-
-    }
-
-    public function receivedDeliveryConfirmation($event)
-    {
-        $senderID    = $event->sender->id;
-        Messenger::sendTextMessage($senderID, 'Test');
-    }
-
-
-    public function receivedPostback($event)
-    {
-       $senderID       = $event->sender->id;
-       Messenger::sendTextMessage($senderID, 'Test');
-    }
-
-}
+$schedule->command('messenger:cron')->hourly();
 ```
 
 ## Create application
@@ -173,76 +98,20 @@ After the application created and the page created and associated copy the `.env
 ```
 
 
+## Configure your json file
+
+Create your `messenger.json`  in `storage/json/`, and configure it using the syntax explained below.
+Once ready, execute
+
+`php artisan messenger:json`
+
+to load the configuration file in the database.
+
+
 ## Host your application
 You have to host your application to become use it. Facebook can't send you a web hook in local. So make sure you have an hosting ready before start you development.
 
 >Your bot is in sandobox by default. Only the people with the permission in your application can talk with it.
-
-
-## Facade
-
-### sendTextMessage
-
-[Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/text-message)
-
- ```php
-    Messenger::sendTextMessage($senderID, "Authentication successful");
- ```
-
-### sendImageMessage
-
-
-[Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/image-attachment)
-
-  ```php
-    Messenger::sendImageMessage($senderID, env('APP_URL') . '/assets/images/logo.png');
-
-  ```
-### getCurrentUserProfile
-
-[Officiale documention](https://developers.facebook.com/docs/messenger-platform/user-profile)
-
-
-  ```php
-    Messenger::getCurrentUserProfile($senderID);
-
-  ```
-
-### sendCard
-
-[Officiale documention](https://developers.facebook.com/docs/messenger-platform/send-api-reference/file-attachment)
-
-
- ```php
-         Messenger::sendCard($senderID, [
-              'template_type' => 'generic',
-              'elements'      => [
-                  [
-                      "title"     => "Messenger Boilerplate",
-                      "image_url" => env('APP_URL') . '/assets/images/logo.png',
-                      "subtitle"  => "example subtitle",
-                      'buttons'   => [
-                          [
-                              'type'  => "web_url",
-                              'url'   => "https://github.com/Distilleries/lumen-messenger-boilerplate",
-                              'title' => "Come download it!"
-                          ]
-                      ]
-                  ]
-
-              ]
-          ]);
- ```
-
-
-## Example
-On this messenger class you can say `hi` and the bot give you an answer like this :
-
-Hi First name Last name
-
-Send a picture with a picto on the bottom right`
-
-I customize your profile picture. Do you like it?
 
 
 ## User Link
@@ -313,6 +182,55 @@ The bot configured above will ask for the user's email. If this email match the 
   }
 ```
 
+### Free input
+
+`free` is an array of keywords that you're bot would react to.
+
+```
+  "free": [
+    {
+      "keywords": ["how","walk","get there"],
+      "text": "It's only 5 minutes walking from the tube station."
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
+    },
+    {
+      "keywords": ["when","time"],
+      "variable": "WHEN_ASKED",
+      "text": "Well, it's happenning tomorrow of course!"
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
+    }
+  ]
+```
+
+### Default answers
+
+`default` is an array of default workflows the bot should react by default (i.e. the input is not recognized as `free` input, or the user is not within any other workflows).
+
+This field is an array because it accepts multiple entries with conditions, like so:
+```
+  "default": [
+    {
+      "conditions": {
+        "date_field": {
+          "field": "trip_date",
+          "type": "after"
+        }
+      },
+      "text": "Sorry I don't understand what you mean. I hope you've enjoyed your trip!"
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
+    },
+    {
+      "conditions": {
+        "date_field": {
+          "field": "trip_date",
+          "type": "before"
+        }
+      },
+      "text": "Sorry I don't understand what you mean. You're approching from your awesome trip! Ask me if you have any questions."
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
+    }
+  ]
+```
 
 ### Scheduled tasks
 
@@ -329,7 +247,7 @@ You can send a message at the exact specified time. It will be parsed using Carb
         "date_time": "2017-07-12 16:55:00"
       },
       "text": "Hello, it is 16:55 today."
-      // YOU CAN PUT HERE AN ATTACHMENT INSTEAD OF THE TEXT
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
     }
   ]
 ```
@@ -347,7 +265,7 @@ You can send a message using a datetime stored in your main user model. `field` 
         }
       },
       "text": "Hello, I'm informing you that in one day, good things will happen"
-      // YOU CAN PUT HERE AN ATTACHMENT INSTEAD OF THE TEXT
+      // YOU CAN PUT HERE AN ATTACHMENT/QUICK REPLIES/SIMPLE REPLIES INSTEAD OF THE TEXT
     }
   ]
 ```
@@ -355,14 +273,64 @@ You can send a message using a datetime stored in your main user model. `field` 
 In the example above, the message is sent 1 day after the `inserted_at` date of the backend user.
 
 
+### Conditions
+
+Scheduled tasks always comes with some dates conditions. But these conditions can also be applied to any kind of workflow.
+
+* `Date field`
+Use a date field located in the table of the backend user linked.
+The condition is checked if the current date is after (or before) the related field of the user.
+@type: "before"/"after" wheter the date must be in the future (after) or in the past (before)
+@modifier: (optional) can modify the date field using DateTime’s modify method
+```
+      "conditions": {
+        "date_field": {
+          "field": "reservation_date",
+          "type": "before"
+        },
+      "text": "Your reservation date is in the future!"
+      },
+```
+
+* `User Progress`
+The condition is checked if the user has registered the exact variables during other conversations with this bot.
+```
+      "conditions": {
+        "user_progress": ['YES_I_WANT']
+      },
+      "text": "Well, I can see you've previously said YES to me!"
+```
+
+* `User Variables`
+A list of conditions related to the backend user model.
+@field: The related field in the linked model
+@operator: `=`, `!=`, `>=`, `<=`, `>`, `<`
+@value: the value
+```
+      "conditions": {
+        "user_variable": [
+            {
+            "field" : "type",
+            "operator": "=",
+            "value" :"vip"
+            }
+        ]
+      },
+      "text": "Welcome to our special VIP program, enjoy!"
+```
 
 ### Basic workflow
 
-```
-"text"
-```
+* __Simple text__
 When using "text" a simple text is sent to the conversation. It can be an @array, in this case several textes will be send one after the other.
 
+```
+"text": "Hello my dear!"
+```
+
+* __Attachment / FB Templates__
+Instead of a "text", you can also send a default facebook `attachment` (https://developers.facebook.com/docs/messenger-platform/send-api-reference/button-template).
+`buttons` can trigger another `workflow` when the type is set to `postback`.
 
 ```
   "attachment": {
@@ -390,12 +358,19 @@ When using "text" a simple text is sent to the conversation. It can be an @array
   }
 ```
 
-Instead of a "text", you can also send a default facebook `attachment` (https://developers.facebook.com/docs/messenger-platform/send-api-reference/button-template).
-`buttons` can trigger another `workflow` when the type is set to `postback`.
 
+* __Inputs__
+This workflow allows the user to input some variable.
+The variable will be stored in the database once validated by the regexpr (not required).
+You're backend can also implement `Distilleries\Messenger\Contracts\MessengerProxyContract` to be able to add several checks on the input.
+If the input is valid against the regexpr, it will be passed to `MessengerProxyContract@receivedInput`. This method should return `true` to validate the input.
+The input name `"link"` is a reserved key word. It will be used to bound the MessengerUser with your own BackendUser using the user input.
+`postback_exists`: (optional - "link" only) if set, this workflow will be triggered if no backend user has been found using this key.
+`postback_unique`: (optional) if set, this workflow will be triggered if another messenger user has registered this input.
+`postback_failed_proxy`: (option) if set, this workflow will be triggered if the proxy returns false.
 
 ```
-"text"
+"text": "Can you please provide your email address, so I can check if I kwow you?",
 "input": {
       "name": "link",
       "regexpr": "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$",
@@ -403,21 +378,28 @@ Instead of a "text", you can also send a default facebook `attachment` (https://
         "text": "Invalid address can you retry please?"
         // YOU CAN USE AN ATTACHMENT INSTEAD OF TEXT HERE
       },
+      "postback_exists": {
+        "text": "I don't know this email address, are you sure I know you?"
+        // YOU CAN USE AN ATTACHMENT INSTEAD OF TEXT HERE
+      },
+      "postback_unique": {
+        "text": "You have already been registered with another facebook account"
+        // YOU CAN USE AN ATTACHMENT INSTEAD OF TEXT HERE
+      },
       "postback_success": {
         // ANOTHER WORKFLOW
       }
 }
 ```
-This workflow allows the user to input some variable.
-The variable will be stored in the database once validated by the regexpr (not required).
-You're backend can also implement `Distilleries\Messenger\Contracts\MessengerProxyContract` to be able to add several checks on the input.
-If the input is valid against the regexpr, it will be passed to `MessengerProxyContract@receivedInput`. This method should return `true` to validate the input.
 
-The input name `"link"` is a reserved key word. It will be used to bound the MessengerUser with your own BackendUser using the user input.
-In this example, the bot asks for the user's `email`. Because we used the reserved keyword `link` for the name, once the input has been validated (through the regexpr AND eventually your own backoffice logic), then the MessengerUser will be linked to your backend user object using this value.
+> In this example, the bot asks for the user's `email`. Because we used the reserved keyword `link` for the name, once the input has been validated (through the regexpr AND eventually your own backoffice logic), then the MessengerUser will be linked to your backend user object using this value.
 Your backend user object must have been set in the `messenger.php` config file.
 
 
+* __Quick replies__
+This will trigger a quick reply prompt to the user (https://developers.facebook.com/docs/messenger-platform/send-api-reference/quick-replies).
+`content-type`, `title` are default facebook parameters, they are directly transmitted to the fb endpoint.
+`payload` is optional (a random key is generated if not set)
 
 ```
 "text"
@@ -438,6 +420,72 @@ Your backend user object must have been set in the `messenger.php` config file.
           }]
 ```
 
-This will trigger a quick reply prompt to the user (https://developers.facebook.com/docs/messenger-platform/send-api-reference/quick-replies).
-`content-type`, `title` are default facebook parameters, they are directly transmitted to the fb endpoint.
-`payload` is optional (a random key is generated if not set)
+* __Free replies__
+This will allow the user to reply any kind of text and would recognize keywords to trigger another workflow.
+```
+    {
+      "text": "What is your favorite fruit ?",
+      "replies": [
+        {
+          "keywords": ["apple", "orange", "watermelon"],
+          "text": "These are the best for summer time!"
+        },
+        {
+          "keywords": ["banana", "mango", "passion", "litchi"],
+          "text": "Well... Obviously you've got a exotic taste"
+        }
+      ]
+    }
+```
+
+* __Store progress variables__
+At any workflow, you can use the `variable` option. It will store this variable in the database once the discussion has reach that level in the worflow.
+```
+    {
+      "text": "What is your favorite fruit ?",
+      "replies": [
+        {
+          "keywords": ["apple", "orange", "watermelon"],
+          "text": "These are the best for summer time!",
+          "variable": "ROUND_SHAPED_FRUITS"
+        },
+        {
+          "keywords": ["banana", "mango", "passion", "litchi"],
+          "text": "Well... Obviously you've got a exotic taste",
+          "variable": "EXOTIC_FRUITS"
+        }
+      ]
+    }
+```
+
+## Proxy
+
+A proxy contract can be overriden to implements your own logic and to intercept events.
+
+
+### Implement contract
+To easily implement this fonctionality for your application I created a `Distilleries\Messenger\Contracts\MessengerProxyContract`.
+
+
+| Method | Description | Return |
+| ------ | ------------| ------------|
+| receivedInput | Callback when an input is received. | `true` if the input is valid, `false` if not (default `true`)|
+| userHasBeenLinked | Callback when the user backend has been linked to the messenger user | - |
+| getPlaceholdersArray | List of placeholders and their related values | An array of key/value `@key` is the placeholder string `@value` is a function($messengerUser, $backendUser) that returns the value|
+| variableCreated | Callback when a variable is saved | - |
+
+
+
+### Change service provider
+
+
+To change the class use go to `app/Providers/AppServiceProvider.php` and change the class inside the share function.
+
+```php
+
+$this->app->singleton('Distilleries\Messenger\Contracts\MessengerProxyContract', function ($app) {
+    return new MyMessengerProxy();
+});
+
+```
+

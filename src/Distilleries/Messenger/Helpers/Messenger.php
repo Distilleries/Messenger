@@ -230,12 +230,13 @@ class Messenger implements MessengerReceiverContract
             if ($oldValue) {
                 $oldValue->update(['value' => $value]);
             } else {
-                MessengerUserVariable::create([
+                $oldValue = MessengerUserVariable::create([
                     'name'              => $name,
                     'value'             => $value,
                     'messenger_user_id' => $this->user->id
                 ]);
             }
+            $this->proxy->variableCreated($oldValue, $this->user);
         }
     }
 
@@ -315,7 +316,7 @@ class Messenger implements MessengerReceiverContract
                     $userProgressCondition = $conditions->user_progress;
                     $userProgressArray     = [];
                     // Insert in the array all the payload the user had progressed into
-                    foreach ($deepConfig = $this->user->progress as $progress) {
+                    foreach ($this->user->progress as $progress) {
                         $deepConfig = $progress->config;
                         do {
                             $userProgressArray[] = $deepConfig->payload;
