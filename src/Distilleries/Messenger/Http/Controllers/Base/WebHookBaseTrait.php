@@ -51,7 +51,7 @@ trait WebHookBaseTrait
                 if (!is_array($pageEntry->messaging)) {
                     continue;
                 }
-
+                $messenger->beforeReception();
                 foreach ($pageEntry->messaging as $messagingEvent) {
 
                     if (!empty($messagingEvent->optin)) {

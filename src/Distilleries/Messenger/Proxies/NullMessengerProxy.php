@@ -12,6 +12,14 @@ class NullMessengerProxy implements \Distilleries\Messenger\Contracts\MessengerP
         return true;
     }
 
+    public function variableCreated($messengerUserVariable, $messengerUser) {
+
+    }
+
+    public function doLogic($name, $messengerUser) {
+
+    }
+
     public function getPlaceholdersArray()
     {
         return [];

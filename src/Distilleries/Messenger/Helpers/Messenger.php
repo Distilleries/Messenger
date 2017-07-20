@@ -24,6 +24,7 @@ class Messenger implements MessengerReceiverContract
     public $messenger = null;
     public $user = null;
     public $proxy = null;
+    public $logicCache = null;
 
     /**
      * Messenger constructor.
@@ -35,6 +36,9 @@ class Messenger implements MessengerReceiverContract
         $this->proxy     = app(MessengerProxyContract::class);
     }
 
+    public function beforeReception() {
+        $this->logicCache = collect([]);
+    }
 
     public function defaultHookUndefinedAction($event)
     {
@@ -64,6 +68,7 @@ class Messenger implements MessengerReceiverContract
 
             return;
         }
+        $this->logicCache = collect([]);
 
         $message            = $event->message;
         $messageText        = !empty($message->text) ? $message->text : null;
@@ -143,7 +148,7 @@ class Messenger implements MessengerReceiverContract
         }
         // delete siblings variable (no concurrence)
         if ($messengerConfig->parent) {
-            $siblings = MessengerConfig::where('parent_id')->get();
+            $siblings = MessengerConfig::where('parent_id', $messengerConfig->parent_id)->get();
             foreach ($siblings as $sibling) {
                 if ($sibling->extra_converted && property_exists($sibling->extra_converted, 'variable')) {
                     $this->user->variables()->where('name', $sibling->extra_converted->variable)->each(function($var) {
@@ -173,7 +178,7 @@ class Messenger implements MessengerReceiverContract
         $this->getMessengerUser($senderID);
 
         $payload = $event->postback->payload;
-        $config  = MessengerConfig::where('payload', $payload)->first();
+        $config  = $this->getMessengerConfigFromEloquent(MessengerConfig::where('payload', $payload)->first());
         if ($config) {
             $this->handleMessengerConfig($senderID, $config);
         } else {
@@ -250,7 +255,7 @@ class Messenger implements MessengerReceiverContract
         $messageConfig = null;
         //Check if the grammar is a quick reply
         if (property_exists($event->message, 'quick_reply')) {
-            $payload = MessengerConfig::where('payload', $event->message->quick_reply->payload)->first();
+            $payload = $this->getMessengerConfigFromEloquent(MessengerConfig::where('payload', $event->message->quick_reply->payload));
             if ($payload && $payload->parent_id) {
                 foreach ($this->user->progress as $progress) {
                     if ($progress->config && $progress->config->id == $payload->parent_id) {
@@ -309,6 +314,12 @@ class Messenger implements MessengerReceiverContract
 
     public function verifyConditions($config)
     {
+        if (property_exists($config->extra_converted, 'logic')) {
+            $logicValue = $this->callLogic($config->extra_converted->logic->name);
+            if ($config->extra_converted->logic->workflow != $logicValue) {
+                return false;
+            }
+        }
         if ($this->user) {
             if (property_exists($config->extra_converted, 'conditions')) {
                 $conditions = $config->extra_converted->conditions;
@@ -381,6 +392,15 @@ class Messenger implements MessengerReceiverContract
         return true;
     }
 
+    protected function callLogic($name) {
+        if ($this->logicCache->has($name)) {
+            return $this->logicCache->get($name);
+        } else {
+            $value = $this->proxy->doLogic($name, $this->user);
+            $this->logicCache->put($name, $value);
+        }
+    }
+
 
     protected function doActionFromInput($messageText, $event)
     {
@@ -390,13 +410,13 @@ class Messenger implements MessengerReceiverContract
         if ($discussion->extra_converted->input->regexpr) {
             $regex = '/' . $discussion->extra_converted->input->regexpr . '/';
             if (!preg_match($regex, $messageText)) {
-                $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED), true);
+                $this->handleMessengerConfig($senderID, $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED)), true);
 
                 return;
             }
         }
         // Check the unicity of the input (if unique)
-        $uniqueAnswer = MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_UNIQUE);
+        $uniqueAnswer = $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_UNIQUE));
         if ($uniqueAnswer && MessengerUserVariable::where('value', $messageText)->where('messenger_user_id', '!=', $this->user->id)->where('name', $discussion->extra_converted->input->name)->count()) {
             $this->handleMessengerConfig($senderID, $uniqueAnswer, true);
 
@@ -406,7 +426,7 @@ class Messenger implements MessengerReceiverContract
         if ($discussion->extra_converted->input->name == 'link' && MessengerConfig::where('group_id', $discussion->group_id)->where('')) {
             $backendUserModel = app(config('messenger.user_link_class'));
             $exists           = $backendUserModel::where(config('messenger.user_link_field'), $messageText)->count();
-            $existsAnswer     = MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_EXISTS);
+            $existsAnswer     = $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_EXISTS));
             if (!$exists && $existsAnswer) {
                 $this->handleMessengerConfig($senderID, $existsAnswer, true);
 
@@ -416,13 +436,26 @@ class Messenger implements MessengerReceiverContract
 
         if (!$this->proxy || $this->proxy->receivedInput($discussion->extra_converted->input->name, $messageText, $this->user, $discussion)) {
             $this->createInputVariable($discussion, $messageText);
-            $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS));
+            $this->handleMessengerConfig($senderID, $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_SUCCESS)));
             $this->proxy->userHasBeenLinked($this->user, $this->user->link);
         } else {
-            $this->handleMessengerConfig($senderID, MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_PROXY), true);
+            $this->handleMessengerConfig($senderID, $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED_PROXY)), true);
         }
 
         return;
+    }
+    public function getMessengerConfigFromEloquent($messengerConfigEl) {
+        if ($messengerConfigEl->count() == 1) {
+            return $messengerConfigEl->first();
+        } elseif ($messengerConfigEl->count() == 0) {
+            return null;
+        } else {
+            foreach ($messengerConfigEl as $config) {
+                if ($this->verifyConditions($config)) {
+                    return $config;
+                }
+            }
+        }
     }
 
     protected function doActionFromAttachment($messageAttachments, $event)

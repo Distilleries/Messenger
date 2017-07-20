@@ -4,6 +4,7 @@
 interface MessengerReceiverContract
 {
 
+    public function beforeReception();
 
     public function receivedAuthentication($event);
 

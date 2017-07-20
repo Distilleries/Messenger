@@ -124,6 +124,25 @@ class LoadMessengerJson extends Command
         if (array_key_exists('text', $data)) {
             $content["text"] = $data['text'];
         }
+
+        if (array_key_exists('logic', $data)) {
+            foreach ($data['logic']['workflows'] as $logic) {
+                $logicPayload = uniqid();
+                if (array_key_exists('payload', $logic)) {
+                    $logicPayload = $logic['payload'];
+                }
+                if (array_key_exists('variable', $logic)) {
+                    $extra['variable'] = $logic['variable'];
+                    unset($logic['variable']);
+                }
+                if (array_key_exists('postback', $logic)) {
+                    $this->saveMessengerObject($logic['postback'], $type, $groupId, $parent_id, $logicPayload, ['logic' => [ "name" => $data['logic']['name'], "workflow" => $logic['case']]]);
+                    unset($logic['postback']);
+                }
+            }
+            // In case of a logic workflow, the workflow is directly split into multiple
+            return;
+        }
         $currentConfig = MessengerConfig::create([
             'type'      => $type,
             //'content' => json_encode($content),
