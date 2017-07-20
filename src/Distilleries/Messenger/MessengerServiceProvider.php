@@ -26,6 +26,10 @@ class MessengerServiceProvider extends ServiceProvider {
             __DIR__.'/../../config/config.php'    => config_path($this->package.'.php'),
             __DIR__ . '/../../database/migrations/' => base_path('/database/migrations'),
         ]);
+        
+        $this->publishes([
+            __DIR__ . '/../../views' => base_path('resources/views/vendor/messenger'),
+        ], 'views');
 
         if (! $this->app->routesAreCached()) {
             $this->map($this->app->make('Illuminate\Routing\Router'));
