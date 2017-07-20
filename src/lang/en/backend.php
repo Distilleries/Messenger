@@ -9,6 +9,7 @@ return [
     'format'                 => 'd/m/Y H:i',
     'messenger_user'         => 'Messenger User',
     'response'               => 'Payload',
+    'request'                => 'Request',
     'inserted_at'            => 'Inserted at',
     'variable'               => 'Variable: ',
     'progress'               => 'Progress: ',

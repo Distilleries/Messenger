@@ -18,9 +18,9 @@ class MessengerUserDatatable extends BaseDatatable
             ->add('sender_id', null, trans('messenger::backend.sender_id'))
             ->add('link_id', null, trans('messenger::backend.link_id'))
             ->add('last_conversation_date', function ($model) {
-                return $model->inserted_at->format('messenger::backend.format');
+                return $model->last_conversation_date->format(trans('messenger::backend.format')));
             }, trans('messenger::backend.last_conversation_date'))
-            ->addDefaultAction('messenger::backend.form.datatable.actions');
+            ->addDefaultAction('messenger::backend.datatable.actions');
     }
 
 }
