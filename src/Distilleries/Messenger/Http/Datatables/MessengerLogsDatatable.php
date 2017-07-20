@@ -21,7 +21,7 @@ class MessengerLogsDatatable extends BaseDatatable
             }, trans('messenger::backend.messenger_user'))
             ->add('response', null, trans('messenger::backend.response'))
             ->add('inserted_at', function ($model) {
-                return $model->inserted_at->format(trans('messenger::backend.format')));
+                return $model->inserted_at->format(trans('messenger::backend.format'));
             }, trans('messenger::backend.inserted_at'))
             ->addDefaultAction('messenger::backend.datatable.actions');
     }
