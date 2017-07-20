@@ -393,6 +393,9 @@ class Messenger implements MessengerReceiverContract
     }
 
     protected function callLogic($name) {
+        if (!$this->logicCache) {
+            $this->logicCache = collect([]);
+        }
         if ($this->logicCache->has($name)) {
             return $this->logicCache->get($name);
         } else {
