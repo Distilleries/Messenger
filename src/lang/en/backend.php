@@ -12,4 +12,8 @@ return [
     'inserted_at'            => 'Inserted at',
     'variable'               => 'Variable: ',
     'progress'               => 'Progress: ',
+    'messenger'              => 'Facebook Messenger',
+    'messenger_users'        => 'Messenger Users',
+    'messenger_logs'         => 'Messenger Logs',
+
 ];
