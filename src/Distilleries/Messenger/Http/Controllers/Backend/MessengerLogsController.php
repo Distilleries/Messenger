@@ -9,7 +9,7 @@ use Distilleries\Messenger\Models\MessengerUser;
 use Distilleries\Expendable\Contracts\LayoutManagerContract;
 use Distilleries\Expendable\Http\Controllers\Backend\Base\BaseComponent;
 
-class MessengerLogController extends BaseComponent
+class MessengerLogsController extends BaseComponent
 {
 
     /**
