@@ -125,6 +125,15 @@ class LoadMessengerJson extends Command
             $content["text"] = $data['text'];
         }
 
+        if (array_key_exists('conditions', $data)) {
+            $extra['conditions'] = $data['conditions'];
+        }
+        if (array_key_exists('keywords', $data)) {
+            $extra['keywords'] = $data['keywords'];
+        }
+        if (array_key_exists('variable', $data)) {
+            $extra['variable'] = $data['variable'];
+        }
         if (array_key_exists('logic', $data)) {
             foreach ($data['logic']['workflows'] as $logic) {
                 $logicPayload = uniqid();
@@ -133,11 +142,10 @@ class LoadMessengerJson extends Command
                 }
                 if (array_key_exists('variable', $logic)) {
                     $extra['variable'] = $logic['variable'];
-                    unset($logic['variable']);
                 }
+                $extra['logic'] = [ "name" => $data['logic']['name'], "workflow" => $logic['case']];
                 if (array_key_exists('postback', $logic)) {
-                    $this->saveMessengerObject($logic['postback'], $type, $groupId, $parent_id, $logicPayload, ['logic' => [ "name" => $data['logic']['name'], "workflow" => $logic['case']]]);
-                    unset($logic['postback']);
+                    $this->saveMessengerObject($logic['postback'], $type, $groupId, $parent_id, $logicPayload, $extra);
                 }
             }
             // In case of a logic workflow, the workflow is directly split into multiple
@@ -212,15 +220,6 @@ class LoadMessengerJson extends Command
             foreach ($data['replies'] as $reply) {
                 $this->saveMessengerObject($reply, $type, $groupId, $currentConfig->id, uniqid());
             }
-        }
-        if (array_key_exists('conditions', $data)) {
-            $extra['conditions'] = $data['conditions'];
-        }
-        if (array_key_exists('keywords', $data)) {
-            $extra['keywords'] = $data['keywords'];
-        }
-        if (array_key_exists('variable', $data)) {
-            $extra['variable'] = $data['variable'];
         }
         $currentConfig->update(['extra' => json_encode($extra)]);
         $currentConfig->update(["content" => json_encode($content)]);
