@@ -43,4 +43,8 @@ class MessengerLog extends BaseModel {
         'response' => 'array',
     ];
 
+    function user() {
+        return $this->belongsTo(MessengerUser::class);
+    }
+
 }
