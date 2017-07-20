@@ -178,7 +178,7 @@ class Messenger implements MessengerReceiverContract
         $this->getMessengerUser($senderID);
 
         $payload = $event->postback->payload;
-        $config  = $this->getMessengerConfigFromEloquent(MessengerConfig::where('payload', $payload)->first());
+        $config  = $this->getMessengerConfigFromEloquent(MessengerConfig::where('payload', $payload));
         if ($config) {
             $this->handleMessengerConfig($senderID, $config);
         } else {
