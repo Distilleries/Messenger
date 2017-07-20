@@ -10,8 +10,11 @@ class ComponentControllerTest extends MessengerTestCase
 
         $this->app->singleton('Distilleries\Messenger\Contracts\MessengerReceiverContract', function ($app) {
             $mock = Mockery::mock('Distilleries\Messenger\Contracts\MessengerReceiverContract')
-                ->shouldReceive(['receivedAuthentication', 'receivedMessage', 'receivedDeliveryConfirmation', 'receivedPostback', 'defaultHookUndefinedAction'])
+                ->shouldReceive(['beforeReception', 'receivedAuthentication', 'receivedMessage', 'receivedDeliveryConfirmation', 'receivedPostback', 'defaultHookUndefinedAction'])
                 ->getMock();
+
+            $mock->shouldReceive('beforeReception')
+                ->andReturn('beforeReception');
 
             $mock->shouldReceive('receivedAuthentication')
                 ->andReturn('receivedAuthentication');
