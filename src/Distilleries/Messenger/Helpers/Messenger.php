@@ -325,18 +325,10 @@ class Messenger implements MessengerReceiverContract
                 $conditions = $config->extra_converted->conditions;
                 if (property_exists($config->extra_converted->conditions, 'user_progress')) {
                     $userProgressCondition = $conditions->user_progress;
-                    $userProgressArray     = [];
-                    // Insert in the array all the payload the user had progressed into
-                    foreach ($this->user->progress as $progress) {
-                        $deepConfig = $progress->config;
-                        do {
-                            $userProgressArray[] = $deepConfig->payload;
-                            $deepConfig          = $deepConfig->parent;
-                        } while ($deepConfig);
-                    }
-
                     foreach ($userProgressCondition as $userProgressPayload) {
-                        if (!in_array($userProgressPayload, $userProgressArray)) {
+                        $variable = $this->user->variables()->where('name', $userProgressPayload)->first();
+                        if (!$variable) {
+                            \Log::error('user prog error');
                             return false;
                         }
                     }
