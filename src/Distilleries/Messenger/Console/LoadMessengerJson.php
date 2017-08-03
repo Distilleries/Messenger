@@ -56,6 +56,7 @@ class LoadMessengerJson extends Command
                 $this->saveStartMessage($json['start']);
                 $this->saveCronMessages($json['cron']);
                 $this->saveFreeMessages($json['free']);
+                $this->saveRecipesMessages($json['recipes']);
                 $this->saveDefaultMessages($json['default']);
             }
         }
@@ -114,6 +115,15 @@ class LoadMessengerJson extends Command
             $this->saveMessengerObject($cron, "default", "default-" . $key, null);
         }
     }
+    protected function saveRecipesMessages($data)
+    {
+        foreach ($data as $key => $recipe) {
+            if (array_key_exists('name', $recipe)) {
+                unset($recipe['name']);
+                $this->saveMessengerObject($recipe, "recipes", $recipe['name'], null);
+            }
+        }
+    }
 
     protected function saveMessengerObject($data, $type, $groupId = null, $parent_id = null, $payload = null, $extra = [])
     {
@@ -130,6 +140,9 @@ class LoadMessengerJson extends Command
         }
         if (array_key_exists('keywords', $data)) {
             $extra['keywords'] = $data['keywords'];
+        }
+        if (array_key_exists('recipe', $data)) {
+            $extra['recipe'] = $data['recipe'];
         }
         if (array_key_exists('variable', $data)) {
             $extra['variable'] = $data['variable'];

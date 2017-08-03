@@ -22,5 +22,4 @@ class MessengerUserDatatable extends BaseDatatable
             }, trans('messenger::backend.last_conversation_date'))
             ->addDefaultAction('messenger::backend.datatable.actions');
     }
-
 }
