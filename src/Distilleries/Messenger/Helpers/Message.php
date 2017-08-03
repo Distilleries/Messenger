@@ -121,13 +121,24 @@ class Message
         } elseif (property_exists($messageData, 'attachment') && is_array($messageData->attachment)) {
             foreach ($messageData->attachment as $attachment) {
                 $multipleMessge = clone $messageData;
-                $multipleMessge->attachment = $attachment;
-                $this->callSendAPI([
-                    "message"   => $multipleMessge,
-                    "recipient" => [
-                        "id" => $recipientId
-                    ]
-                ]);
+                if (is_string($attachment)) { // Merge attachement with some text is possible
+                    $multipleMessge = new stdClass();
+                    $multipleMessge->text = $attachment;
+                    $this->callSendAPI([
+                        "message"   => $multipleMessge,
+                        "recipient" => [
+                            "id" => $recipientId
+                        ]
+                    ]);
+                } else {
+                    $multipleMessge->attachment = $attachment;
+                    $this->callSendAPI([
+                        "message"   => $multipleMessge,
+                        "recipient" => [
+                            "id" => $recipientId
+                        ]
+                    ]);
+                }
             }
         } else {
             $this->callSendAPI([
