@@ -19,7 +19,9 @@ This repo contain some tools to work with facebook messenger bot and  laravel/lu
 1. [User Link](#user-link)
 1. [JSON Structure](#json-structure)
     1. [Configuration](#configuration)
+    1. [Persistent menu](#persistent-menu)
     1. [Start](#start)
+    1. [Recipes](#recipes)
     1. [Free input](#free-input)
     1. [Default answers](#default-answers)
     1. [Scheduled Tasks](#scheduled-tasks)
@@ -173,6 +175,40 @@ The bot configured above will ask for the user's email. If this email match the 
 - `start_btn` Whether or not the "Start" button is displayed at the first discussion.
 - `home_text` You can put here the greeting text that will be displayed. (https://developers.facebook.com/docs/messenger-platform/messenger-profile/greeting-text)
 
+### Persistent menu
+
+The `persistent_menu` syntax is exactly the same as facebook's. The only one different is when you want to trigger a workflow.
+Using `type: postback` you want to add your workflow in the custom `postback` field. 
+We recommend that you use `recipe` logic here, but you can also write your own workflow here.
+
+Example:
+```
+  "persistent_menu": {
+    "composer_input_disabled": true,
+    "call_to_actions": [
+      {
+        "title": "Restart",
+        "type": "postback",
+        "payload": "GET_STARTED_PAYLOAD" // This payload is the one that allows you to trigger the "start" workflow
+      },
+      {
+        "title": "Website links",
+        "type": "postback",
+        "postback": {
+          "recipe": "visit-website" // See recipes section
+        }
+      },
+      {
+        "title": "How are you ?",
+        "type": "postback",
+        "postback": {
+          "text": "I'm fine, than you !"
+        }
+      }
+    ]
+  },
+```
+
 ### Start
 
 `start` is the very first workflow that will be triggered at the first discussion.
@@ -180,6 +216,53 @@ The bot configured above will ask for the user's email. If this email match the 
 ```
   "start": {
   }
+```
+
+
+### Recipes
+
+Recipes are some small parts of workflow that can be triggered from any other workflows.
+You just have to give it a name like so:
+
+```
+  "recipes": [
+    {
+      "name": "visit-website",
+      "attachment": [
+        {
+          "type": "template",
+          "payload": {
+            "template_type": "button",
+            "text": "Here are our websites links",
+            "buttons": [
+              {
+                "type": "web_url",
+                "url": "www.mylink.com",
+                "title": "Corporate website link"
+              },
+              {
+                "type": "web_url",
+                "url": "www.myotherlink.com",
+                "title": "Commercial website link"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+```
+This recipe will simply show a button template with a bunch of links. It can now be triggered from any other workflow, simply by using the `recipe` keyword:
+
+```
+"start": {
+    "text": "Wanna check our websites ?",
+    "recipe": "visit-website"
+},
+"free": [{
+    "keywords": ["website", "corporate","contact"],
+    "recipe": "visit-website"
+}]
 ```
 
 ### Free input
@@ -279,7 +362,7 @@ Scheduled tasks always comes with some dates conditions. But these conditions ca
 
 * `Date field`
 Use a date field located in the table of the backend user linked.
-The condition is checked if the current date is after (or before) the related field of the user.
+The condition is checked if the current date is after (or before) the related field of the user. 
 @type: "before"/"after" wheter the date must be in the future (after) or in the past (before)
 @modifier: (optional) can modify the date field using DateTime’s modify method
 ```
@@ -293,7 +376,7 @@ The condition is checked if the current date is after (or before) the related fi
 ```
 
 * `User Progress`
-The condition is checked if the user has registered the exact variables during other conversations with this bot.
+The condition is checked if the user has registered the exact variables during other conversations with this bot. 
 ```
       "conditions": {
         "user_progress": ['YES_I_WANT']
@@ -359,7 +442,7 @@ Instead of a "text", you can also send a default facebook `attachment` (https://
 ```
 
 
-* __Inputs__
+* __Inputs__ 
 This workflow allows the user to input some variable.
 The variable will be stored in the database once validated by the regexpr (not required).
 You're backend can also implement `Distilleries\Messenger\Contracts\MessengerProxyContract` to be able to add several checks on the input.
