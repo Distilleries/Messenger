@@ -56,6 +56,9 @@ class LoadMessengerJson extends Command
                 if (key_exists('start', $json)) {
                     $this->saveStartMessage($json['start']);
                 }
+                if (key_exists('persistent_menu', $json)) {
+                    $this->loadPersistentMenu($json['persistent_menu']);
+                }
                 if (key_exists('cron', $json)) {
                     $this->saveCronMessages($json['cron']);
                 }
@@ -83,6 +86,35 @@ class LoadMessengerJson extends Command
             $this->messenger->callSendAPI(["greeting" => ["locale" => "default", "text" => $conf['home_text']]], 'uri_config');
         } else {
             $this->messenger->callSendAPI(["fields" => ["greeting"]], 'uri_config', "DELETE");
+        }
+    }
+
+    protected function loadPersistentMenu($persistentMenu)
+    {
+        if ($persistentMenu) {
+            $this->handlePersistentMenuCallToAction($persistentMenu);
+            if (!key_exists('locale', $persistentMenu)) {
+                $persistentMenu['locale'] = 'default';
+            }
+            $this->messenger->callSendAPI(["persistent_menu" =>  [$persistentMenu]], 'uri_config');
+        } else {
+            $this->messenger->callSendAPI(["fields" => ["persistent_menu"]], 'uri_config', "DELETE");
+        }
+    }
+    protected function handlePersistentMenuCallToAction(&$cta) {
+        if (key_exists('postback', $cta)) {
+            $payload = uniqid();
+            if (array_key_exists('payload', $cta)) {
+                $payload = $cta['payload'];
+            }
+            $this->saveMessengerObject($cta['postback'], 'persistent_menu', 'persistent_menu-' . $payload, null, $payload);
+            $cta['payload'] = $payload;
+            unset($cta['postback']);
+        }
+        if (key_exists('call_to_actions', $cta)) {
+            foreach ($cta['call_to_actions'] as $k => $menu) {
+                $this->handlePersistentMenuCallToAction($cta['call_to_actions'][$k]);
+            }
         }
     }
 
