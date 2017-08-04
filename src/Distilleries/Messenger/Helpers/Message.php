@@ -108,7 +108,11 @@ class Message
 
     public function sendData($messageData, $recipientId) {
         if (property_exists($messageData, 'text') && is_array($messageData->text)) {
+            $this->typingOn($recipientId);
             foreach ($messageData->text as $text) {
+                usleep(200000);
+                $this->typingOn($recipientId);
+                usleep(800000);
                 $multipleMessge = clone $messageData;
                 $multipleMessge->text = $text;
                 $this->callSendAPI([
@@ -120,6 +124,9 @@ class Message
             }
         } elseif (property_exists($messageData, 'attachment') && is_array($messageData->attachment)) {
             foreach ($messageData->attachment as $attachment) {
+                usleep(200000);
+                $this->typingOn($recipientId);
+                usleep(800000);
                 $multipleMessge = clone $messageData;
                 if (is_string($attachment)) { // Merge attachement with some text is possible
                     $multipleMessge = new \stdClass();
@@ -148,8 +155,35 @@ class Message
                 ]
             ]);
         }
+        $this->typingOff($recipientId);
     }
 
+    public function typingOn($recipientId) {
+        return $this->callSendAPI([
+            "recipient" => [
+                "id" => $recipientId
+            ],
+            "sender_action" => "typing_on"
+        ]);
+    }
+
+    public function typingOff($recipientId) {
+        return $this->callSendAPI([
+            "recipient" => [
+                "id" => $recipientId
+            ],
+            "sender_action" => "typing_off"
+        ]);
+    }
+
+    public function markSeen($recipientId) {
+        return $this->callSendAPI([
+            "recipient" => [
+                "id" => $recipientId
+            ],
+            "sender_action" => "mark_seen"
+        ]);
+    }
 
     public function callSendAPI($messageData, $uri = 'uri_bot', $method = "POST")
     {
@@ -171,19 +205,6 @@ class Message
             }
             throw new MessengerException(trans('messenger::errors.unable_send_message'), 0, $e);
         }
-    }
-
-
-    public function persistMenu($menu)
-    {
-
-        $messageData = [
-            "setting_type"    => "call_to_actions",
-            "thread_state"    => "existing_thread",
-            "call_to_actions" => $menu
-        ];
-
-        return $this->callSendAPI($messageData);
     }
 
     public function getCurrentUserProfile($uid, $fields = null)
