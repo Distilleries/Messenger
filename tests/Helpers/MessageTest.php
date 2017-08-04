@@ -213,50 +213,6 @@ class MessageTest extends MessengerTestCase
     }
 
 
-    public function testPersistMenu(){
-
-        $datas = ["result" => "Ok"];
-        $mock = new \GuzzleHttp\Handler\MockHandler([
-            new Psr7\Response(200, ['Content-Type' => 'application/json'], Psr7\stream_for(json_encode($datas))),
-        ]);
-
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client  = new \GuzzleHttp\Client(['handler' => $handler]);
-
-        try {
-            $config = [
-                'page_access_token' => 'Token',
-                'uri_bot'           => 'https://graph.facebook.com/v2.6/',
-                'uri_open_graph'    => 'https://graph.facebook.com/v2.6/',
-            ];
-
-            $message = (new \Distilleries\Messenger\Helpers\Message($config, $client))->persistMenu([
-                [
-                    "type"    => "postback",
-                    "title"   => "Help",
-                    "payload" => "DEVELOPER_DEFINED_PAYLOAD_FOR_HELP"
-                ],
-                [
-                    "type"    => "postback",
-                    "title"   => "Start a New Order",
-                    "payload" => "DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER"
-                ],
-                [
-                    "type"  => "web_url",
-                    "title" => "View Website",
-                    "url"   => "http://petersapparel.parseapp.com/"
-                ]
-            ]);
-            $this->assertEquals($message, json_encode($datas));
-
-        } catch (Exception $e) {
-            $this->assertFalse(true, "An HttpException should not have been thrown by the provided Closure.");
-        }
-
-    }
-
-
-
     public function testClientException(){
 
 
