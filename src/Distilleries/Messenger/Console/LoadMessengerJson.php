@@ -53,11 +53,21 @@ class LoadMessengerJson extends Command
             if ($json) {
                 $this->cleanDatabase();
                 $this->loadConfig($json['config']);
-                $this->saveStartMessage($json['start']);
-                $this->saveCronMessages($json['cron']);
-                $this->saveFreeMessages($json['free']);
-                $this->saveRecipesMessages($json['recipes']);
-                $this->saveDefaultMessages($json['default']);
+                if (key_exists('start', $json)) {
+                    $this->saveStartMessage($json['start']);
+                }
+                if (key_exists('cron', $json)) {
+                    $this->saveCronMessages($json['cron']);
+                }
+                if (key_exists('free', $json)) {
+                    $this->saveFreeMessages($json['free']);
+                }
+                if (key_exists('recipes', $json)) {
+                    $this->saveRecipesMessages($json['recipes']);
+                }
+                if (key_exists('default', $json)) {
+                    $this->saveDefaultMessages($json['default']);
+                }
             }
         }
     }
@@ -106,6 +116,7 @@ class LoadMessengerJson extends Command
             $this->saveMessengerObject($cron, "free", "free-" . $key, null);
         }
     }
+
     protected function saveDefaultMessages($data)
     {
         if (!is_array($data)) {
@@ -115,12 +126,14 @@ class LoadMessengerJson extends Command
             $this->saveMessengerObject($cron, "default", "default-" . $key, null);
         }
     }
+
     protected function saveRecipesMessages($data)
     {
         foreach ($data as $key => $recipe) {
             if (array_key_exists('name', $recipe)) {
+                $name = $recipe['name'];
                 unset($recipe['name']);
-                $this->saveMessengerObject($recipe, "recipes", $recipe['name'], null);
+                $this->saveMessengerObject($recipe, "recipes", $name, null);
             }
         }
     }
@@ -156,11 +169,12 @@ class LoadMessengerJson extends Command
                 if (array_key_exists('variable', $logic)) {
                     $extra['variable'] = $logic['variable'];
                 }
-                $extra['logic'] = [ "name" => $data['logic']['name'], "workflow" => $logic['case']];
+                $extra['logic'] = ["name" => $data['logic']['name'], "workflow" => $logic['case']];
                 if (array_key_exists('postback', $logic)) {
                     $this->saveMessengerObject($logic['postback'], $type, $groupId, $parent_id, $logicPayload, $extra);
                 }
             }
+
             // In case of a logic workflow, the workflow is directly split into multiple
             return;
         }
@@ -173,18 +187,14 @@ class LoadMessengerJson extends Command
         ]);
 
         if (array_key_exists('attachment', $data)) {
-            if (array_key_exists('payload', $data['attachment']) && array_key_exists('buttons', $data['attachment']['payload'])) {
-                foreach ($data['attachment']['payload']['buttons'] as $key => $button) {
-                    if ($button['type'] == 'postback' && array_key_exists('postback', $button)) {
-                        $payload = uniqid();
-                        if (array_key_exists('payload', $button)) {
-                            $payload = $button['payload'];
-                        }
-                        $this->saveMessengerObject($button['postback'], $type, $groupId, $currentConfig->id, $payload);
-                        $data['attachment']['payload']['buttons'][$key]['payload'] = $payload;
-                        unset($data['attachment']['payload']['buttons'][$key]['postback']);
+            if (is_array($data['attachment'])) {
+                foreach ($data['attachment'] as $key => $attachment) {
+                    if (!is_string($attachment)) {
+                        $this->handleAttachment($data['attachment'][$key], $type, $groupId, $currentConfig);
                     }
                 }
+            } else {
+                $this->handleAttachment($data['attachment'], $type, $groupId, $currentConfig);
             }
             $content["attachment"] = $data['attachment'];
         }
@@ -236,5 +246,46 @@ class LoadMessengerJson extends Command
         }
         $currentConfig->update(['extra' => json_encode($extra)]);
         $currentConfig->update(["content" => json_encode($content)]);
+    }
+
+    protected function handleAttachment(&$attachment, $type, $groupId, $currentConfig)
+    {
+        if (array_key_exists('payload', $attachment)) {
+            if (array_key_exists('buttons', $attachment['payload'])) {
+                foreach ($attachment['payload']['buttons'] as $key => $button) {
+                    $this->handleAttachmentButton($attachment['payload']['buttons'][$key], $type, $groupId, $currentConfig);
+                }
+            }
+            if (array_key_exists('elements', $attachment['payload'])) {
+                foreach ($attachment['payload']['elements'] as $keyElem => $element) {
+                    if (array_key_exists('image_url', $element)) {
+                        if (!filter_var($element['image_url'], FILTER_VALIDATE_URL)) {
+                            $attachment['payload']['elements'][$keyElem]['image_url'] = asset($attachment['payload']['elements'][$keyElem]['image_url']);
+                        }
+                    }
+                    if (array_key_exists('buttons', $element)) {
+                        foreach ($element['buttons'] as $key => $button) {
+                            $this->handleAttachmentButton($attachment['payload']['elements'][$keyElem]['buttons'][$key], $type, $groupId, $currentConfig);
+                        }
+                    }
+                    if (array_key_exists('default_action', $element)) {
+                        $this->handleAttachmentButton($attachment['payload']['elements'][$keyElem]['default_action'], $type, $groupId, $currentConfig);
+                    }
+                }
+            }
+        }
+    }
+
+    protected function handleAttachmentButton(&$button, $type, $groupId, $currentConfig)
+    {
+        if ($button['type'] == 'postback' && array_key_exists('postback', $button)) {
+            $payload = uniqid();
+            if (array_key_exists('payload', $button)) {
+                $payload = $button['payload'];
+            }
+            $this->saveMessengerObject($button['postback'], $type, $groupId, $currentConfig->id, $payload);
+            $button['payload'] = $payload;
+            unset($button['postback']);
+        }
     }
 }

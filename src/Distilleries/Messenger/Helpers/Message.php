@@ -122,7 +122,7 @@ class Message
             foreach ($messageData->attachment as $attachment) {
                 $multipleMessge = clone $messageData;
                 if (is_string($attachment)) { // Merge attachement with some text is possible
-                    $multipleMessge = new stdClass();
+                    $multipleMessge = new \stdClass();
                     $multipleMessge->text = $attachment;
                     $this->callSendAPI([
                         "message"   => $multipleMessge,
