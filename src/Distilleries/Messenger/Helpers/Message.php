@@ -109,11 +109,16 @@ class Message
     public function sendData($messageData, $recipientId) {
         if (property_exists($messageData, 'text') && is_array($messageData->text)) {
             $this->typingOn($recipientId);
+            $lastText = end($messageData->text);
             foreach ($messageData->text as $text) {
                 usleep(200000);
                 $this->typingOn($recipientId);
                 usleep(800000);
-                $multipleMessge = clone $messageData;
+
+                $multipleMessge = new \stdClass();
+                if ($text == $lastText) {
+                    $multipleMessge = clone $messageData;
+                }
                 $multipleMessge->text = $text;
                 $this->callSendAPI([
                     "message"   => $multipleMessge,
