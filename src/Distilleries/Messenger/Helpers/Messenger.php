@@ -169,6 +169,9 @@ class Messenger implements MessengerReceiverContract
             ]);
         }
         if ( $messengerConfig->extra_converted && property_exists($messengerConfig->extra_converted, 'recipe')) {
+            if (!empty(json_decode($messengerConfig->content))) {
+                $this->messenger->sendData(json_decode($this->handlePlaceholders($messengerConfig->content)), $recipientId);
+            }
             $recipeConfig  = $this->getMessengerConfigFromEloquent(MessengerConfig::whereNull('parent_id')->where('group_id', $messengerConfig->extra_converted->recipe));
             return $this->handleMessengerConfig($recipientId, $recipeConfig, $silent = false);
         }
