@@ -219,10 +219,16 @@ class LoadMessengerJson extends Command
         ]);
 
         if (array_key_exists('attachment', $data)) {
+
             if (is_array($data['attachment'])) {
-                foreach ($data['attachment'] as $key => $attachment) {
-                    if (!is_string($attachment)) {
-                        $this->handleAttachment($data['attachment'][$key], $type, $groupId, $currentConfig);
+                $keys = array_keys($data['attachment']);
+                if (array_keys($keys) !== $keys) {
+                    $this->handleAttachment($data['attachment'], $type, $groupId, $currentConfig);
+                } else {
+                    foreach ($data['attachment'] as $key => $attachment) {
+                        if (!is_string($attachment)) {
+                            $this->handleAttachment($data['attachment'][$key], $type, $groupId, $currentConfig);
+                        }
                     }
                 }
             } else {
