@@ -128,13 +128,16 @@ class Message
                 ]);
             }
         } elseif (property_exists($messageData, 'attachment') && is_array($messageData->attachment)) {
+            $lastItem = end($messageData->attachment);
             foreach ($messageData->attachment as $attachment) {
                 usleep(200000);
                 $this->typingOn($recipientId);
                 usleep(800000);
-                $multipleMessge = clone $messageData;
+                $multipleMessge = new \stdClass();
+                if ($attachment == $lastItem) {
+                    $multipleMessge = clone $messageData;
+                }
                 if (is_string($attachment)) { // Merge attachement with some text is possible
-                    $multipleMessge = new \stdClass();
                     $multipleMessge->text = $attachment;
                     $this->callSendAPI([
                         "message"   => $multipleMessge,
