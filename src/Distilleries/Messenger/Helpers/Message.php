@@ -136,6 +136,8 @@ class Message
                 $multipleMessge = new \stdClass();
                 if ($attachment == $lastItem) {
                     $multipleMessge = clone $messageData;
+                    unset($multipleMessge->text);
+                    unset($multipleMessge->attachment);
                 }
                 if (is_string($attachment)) { // Merge attachement with some text is possible
                     $multipleMessge->text = $attachment;
