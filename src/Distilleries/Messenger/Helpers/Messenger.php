@@ -341,6 +341,9 @@ class Messenger implements MessengerReceiverContract
                     }
                 }
                 if (property_exists($config->extra_converted->conditions, 'date_field')) {
+                    if (!$this->user->link)
+                        return false;
+
                     if ($this->user->link && $this->user->link->getAttributeValue($config->extra_converted->conditions->date_field->field)) {
                         $carbonDate = $this->user->link->getAttributeValue($config->extra_converted->conditions->date_field->field);
                         if (property_exists($config->extra_converted->conditions->date_field, 'modifier')) {
@@ -380,6 +383,9 @@ class Messenger implements MessengerReceiverContract
                             if (!$variable || !ComparisonHelper::condition($variable, $userVariable->operator, $userVariable->value)) {
                                 return false;
                             }
+                        } else {
+                            if (!$this->user->link)
+                                return false;
                         }
                     }
                 }
