@@ -327,14 +327,21 @@ class Messenger implements MessengerReceiverContract
 
     protected function log($level, $message)
     {
-        $log = config('messenger.log_level', 'info');
-        if ($level == $log || $log == 'info') {
-            \Log::${$level}($message);
+        $logauthorized = config('messenger.log_level', 'info');
+        if ($level == $logauthorized || $logauthorized == 'info') {
+            if ($level == 'info'){
+                \Log::info($message);
+            } else  {
+                \Log::error($message);
+            }
         }
     }
 
     public function verifyConditions($config)
     {
+        if (!$config->extra_converted) {
+            return true;
+        }
         if (property_exists($config->extra_converted, 'logic')) {
             $logicValue = $this->callLogic($config->extra_converted->logic->name);
             if ($config->extra_converted->logic->workflow != $logicValue) {
