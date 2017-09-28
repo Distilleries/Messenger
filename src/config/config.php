@@ -9,5 +9,10 @@ return [
     'uri_config'        => 'https://graph.facebook.com/v2.6/me/messenger_profile',
     'user_link_class'   => 'App\Models\User',
     'user_link_field'   => 'email',
+    /*
+     * Log level:
+     * error or info
+     */
+    'log_level'         => 'error',
 
 ];
