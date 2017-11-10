@@ -286,7 +286,7 @@ class Messenger implements MessengerReceiverContract
         if ($latestDiscuss) {
             $potentialReplies = MessengerConfig::where('parent_id', $latestDiscuss->id)->get();
             foreach ($potentialReplies as $potentialReply) {
-                if (property_exists($potentialReply->extra_converted, 'keywords')) {
+                if (property_exists($potentialReply, 'extra_converted') && $potentialReply->extra_converted && property_exists($potentialReply->extra_converted, 'keywords')) {
                     foreach ($potentialReply->extra_converted->keywords as $keyword) {
                         if ($this->verifyConditions($potentialReply) && strpos($messageText, $keyword) !== false) {
                             $this->handleMessengerConfig($senderID, $potentialReply);
