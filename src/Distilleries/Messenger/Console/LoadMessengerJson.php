@@ -167,7 +167,7 @@ class LoadMessengerJson extends Command
             if (array_key_exists('name', $recipe)) {
                 $name = $recipe['name'];
                 unset($recipe['name']);
-                $this->saveMessengerObject($recipe, "recipes", $name, null);
+                $this->saveMessengerObject($recipe, "recipes", $name, null, $name);
             }
         }
     }
