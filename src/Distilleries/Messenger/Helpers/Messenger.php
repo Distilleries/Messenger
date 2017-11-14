@@ -454,7 +454,7 @@ class Messenger implements MessengerReceiverContract
         $this->log('info', ('doActionFromInput: ' . $messageText));
         $senderID   = $event->sender->id;
         $discussion = $this->user->getLatestDiscussion();
-        if ($discussion->extra_converted->input->regexpr) {
+        if (property_exists($discussion->extra_converted->input, 'regexpr') && $discussion->extra_converted->input->regexpr) {
             $regex = '/' . $discussion->extra_converted->input->regexpr . '/';
             if (!preg_match($regex, $messageText)) {
                 $this->handleMessengerConfig($senderID, $this->getMessengerConfigFromEloquent(MessengerConfig::getAnswerFromConfig($discussion->id, MessengerConfig::INPUT_ANSWER_FAILED)), true);
