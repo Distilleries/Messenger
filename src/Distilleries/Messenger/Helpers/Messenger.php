@@ -288,9 +288,8 @@ class Messenger implements MessengerReceiverContract
             foreach ($potentialReplies as $potentialReply) {
                 if (property_exists($potentialReply, 'extra_converted') && $potentialReply->extra_converted && property_exists($potentialReply->extra_converted, 'keywords')) {
                     foreach ($potentialReply->extra_converted->keywords as $keyword) {
-                        if ($this->verifyConditions($potentialReply) && strpos($messageText, $keyword) !== false) {
+                        if ($this->verifyConditions($potentialReply) && $this->verifyKeyword($keyword, $messageText)) {
                             $this->handleMessengerConfig($senderID, $potentialReply);
-
                             return;
                         }
                     }
@@ -302,7 +301,7 @@ class Messenger implements MessengerReceiverContract
         $freeTexts = MessengerConfig::where('type', 'free')->whereNull('parent_id')->get();
         foreach ($freeTexts as $freeText) {
             foreach ($freeText->extra_converted->keywords as $keyword) {
-                if ($this->verifyConditions($freeText) && strpos($messageText, $keyword) !== false) {
+                if ($this->verifyConditions($freeText) && $this->verifyKeyword($keyword, $messageText)) {
                     $this->handleMessengerConfig($senderID, $freeText);
 
                     return;
@@ -329,12 +328,27 @@ class Messenger implements MessengerReceiverContract
     {
         $logauthorized = config('messenger.log_level', 'info');
         if ($level == $logauthorized || $logauthorized == 'info') {
-            if ($level == 'info'){
+            if ($level == 'info') {
                 \Log::info($message);
-            } else  {
+            } else {
                 \Log::error($message);
             }
         }
+    }
+
+
+    public function verifyKeyword($keyword, $messageText)
+    {
+        // If the first char is a slash, we consider it as a regexpr
+        if (substr($keyword, 0, 1) == "/" && preg_match($keyword, $messageText)) {
+            return true;
+        } else {
+            // Otherwise we check if the word exists within the message.
+            if (substr($keyword, 0, 1) != "/" && strpos($messageText, $keyword) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function verifyConditions($config)
