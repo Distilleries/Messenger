@@ -111,9 +111,13 @@ class Message
             $this->typingOn($recipientId);
             $lastText = end($messageData->text);
             foreach ($messageData->text as $text) {
-                usleep(200000);
+                if (intval($this->config['sleep_time_before_typing'])) {
+                    usleep(intval($this->config['sleep_time_before_typing']) * 1000);
+                }
                 $this->typingOn($recipientId);
-                usleep(800000);
+                if (intval($this->config['sleep_time_after_typing'])) {
+                    usleep(intval($this->config['sleep_time_after_typing']) * 1000);
+                }
 
                 $multipleMessge = new \stdClass();
                 if ($text == $lastText) {
@@ -130,9 +134,13 @@ class Message
         } elseif (property_exists($messageData, 'attachment') && is_array($messageData->attachment)) {
             $lastItem = end($messageData->attachment);
             foreach ($messageData->attachment as $attachment) {
-                usleep(200000);
+                if (intval($this->config['sleep_time_before_typing'])) {
+                    usleep(intval($this->config['sleep_time_before_typing']) * 1000);
+                }
                 $this->typingOn($recipientId);
-                usleep(800000);
+                if (intval($this->config['sleep_time_after_typing'])) {
+                    usleep(intval($this->config['sleep_time_after_typing']) * 1000);
+                }
                 $multipleMessge = new \stdClass();
                 if ($attachment == $lastItem) {
                     $multipleMessge = clone $messageData;
