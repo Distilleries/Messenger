@@ -344,7 +344,7 @@ class Messenger implements MessengerReceiverContract
             return true;
         } else {
             // Otherwise we check if the word exists within the message.
-            if (substr($keyword, 0, 1) != "/" && strpos($messageText, $keyword) !== false) {
+            if (substr($keyword, 0, 1) != "/" && strpos(strtolower($messageText), strtolower($keyword)) !== false) {
                 return true;
             }
         }
