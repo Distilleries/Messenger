@@ -503,6 +503,38 @@ This will trigger a quick reply prompt to the user (https://developers.facebook.
           }]
 ```
 
+You also have the possibility to combine `keywords` with `quick_replies` so a keyword can trigger a quick_replies if the user chooses to answer the quick_reply using the keyword.
+Here's how to do it:
+
+```
+"text"
+"quick_replies": [{
+            "content_type": "text",
+            "title": "Yes I do",
+            "payload": "YES_RECEIVE",
+            "postback": {
+                'keywords': [
+                    'yes',
+                    '/y.*/gi'
+                ],
+                // ANOTHER WORKFLOW
+            }
+        },
+          {
+            "content_type": "text",
+            "title": "No I don't",
+            "postback": {
+                'keywords': [
+                    'no',
+                    '/n.*/gi'
+                ],
+                // ANOTHER WORKFLOW
+            }
+          }]
+```
+
+
+
 * __Free replies__
 This will allow the user to reply any kind of text and would recognize keywords to trigger another workflow.
 ```
