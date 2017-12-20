@@ -23,10 +23,10 @@ class MessengerServiceProvider extends ServiceProvider {
         $this->loadViewsFrom(__DIR__.'/../../views', $this->package);
         $this->loadTranslationsFrom(__DIR__.'/../../lang', $this->package);
         $this->publishes([
-            __DIR__.'/../../config/config.php'    => config_path($this->package.'.php'),
-            __DIR__ . '/../../database/migrations/' => base_path('/database/migrations'),
+            __DIR__.'/../../config/config.php'    => config_path($this->package.'.php')
         ]);
 
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations/');
         $this->publishes([
             __DIR__ . '/../../views' => base_path('resources/views/vendor/messenger'),
         ], 'views');

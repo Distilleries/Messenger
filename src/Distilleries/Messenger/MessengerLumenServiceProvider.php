@@ -17,6 +17,7 @@ class MessengerLumenServiceProvider extends ServiceProvider {
     {
         $this->loadViewsFrom(__DIR__.'/../../views', $this->package);
         $this->loadTranslationsFrom(__DIR__.'/../../lang', $this->package);
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations/');
         $this->map();
     }
 
